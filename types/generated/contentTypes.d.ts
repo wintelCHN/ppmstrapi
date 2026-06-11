@@ -607,6 +607,54 @@ export interface ApiPagePage extends Struct.CollectionTypeSchema {
   };
 }
 
+export interface ApiSiteSite extends Struct.CollectionTypeSchema {
+  collectionName: 'sites';
+  info: {
+    description: 'Site configuration for multi-site deployment management';
+    displayName: 'Site';
+    name: 'site';
+    pluralName: 'sites';
+    singularName: 'site';
+  };
+  options: {
+    draftAndPublish: true;
+  };
+  attributes: {
+    astro_project_name: Schema.Attribute.String;
+    build_webhook: Schema.Attribute.String;
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    deploy_platform: Schema.Attribute.Enumeration<
+      ['vercel', 'cloudflare-pages', 'netlify']
+    >;
+    description: Schema.Attribute.Text;
+    github_branch: Schema.Attribute.String & Schema.Attribute.DefaultTo<'main'>;
+    github_repo: Schema.Attribute.String;
+    locale: Schema.Attribute.String & Schema.Attribute.Private;
+    localizations: Schema.Attribute.Relation<'oneToMany', 'api::site.site'> &
+      Schema.Attribute.Private;
+    name: Schema.Attribute.String & Schema.Attribute.Required;
+    notes: Schema.Attribute.Blocks;
+    preview_url: Schema.Attribute.String;
+    primary_domain: Schema.Attribute.String;
+    production_url: Schema.Attribute.String;
+    publishedAt: Schema.Attribute.DateTime;
+    secondary_domains: Schema.Attribute.JSON;
+    seo_default_description: Schema.Attribute.Text;
+    seo_default_keywords: Schema.Attribute.Text;
+    seo_default_title: Schema.Attribute.String;
+    slug: Schema.Attribute.UID<'name'>;
+    status: Schema.Attribute.Enumeration<
+      ['active', 'inactive', 'development']
+    > &
+      Schema.Attribute.DefaultTo<'development'>;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+  };
+}
+
 export interface PluginContentReleasesRelease
   extends Struct.CollectionTypeSchema {
   collectionName: 'strapi_releases';
@@ -1121,6 +1169,7 @@ declare module '@strapi/strapi' {
       'api::global.global': ApiGlobalGlobal;
       'api::lead-form-submission.lead-form-submission': ApiLeadFormSubmissionLeadFormSubmission;
       'api::page.page': ApiPagePage;
+      'api::site.site': ApiSiteSite;
       'plugin::content-releases.release': PluginContentReleasesRelease;
       'plugin::content-releases.release-action': PluginContentReleasesReleaseAction;
       'plugin::i18n.locale': PluginI18NLocale;
