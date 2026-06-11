@@ -25,8 +25,7 @@
     },
     "status": {
       "type": "enumeration",
-      "enum": ["active", "inactive", "development"],
-      "default": "development"
+      "enum": ["active", "inactive", "development"]
     },
     "primary_domain": {
       "type": "string"
@@ -68,6 +67,12 @@
     },
     "notes": {
       "type": "blocks"
+    },
+    "categories": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::category.category",
+      "mappedBy": "site"
     }
   }
 }
