@@ -62,6 +62,12 @@
       },
       "type": "string",
       "regex": "^$|^[a-zA-Z/-]+$"
+    },
+    "siteTemplates": {
+      "type": "relation",
+      "relation": "manyToMany",
+      "target": "api::site-template.site-template",
+      "mappedBy": "pages"
     }
   }
 }
