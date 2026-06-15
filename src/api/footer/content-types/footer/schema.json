@@ -6,7 +6,7 @@
     "pluralName": "footers",
     "displayName": "Footer",
     "name": "footer",
-    "description": "Site footer with column-based link groups and legal links"
+    "description": "Per-site footer configuration (one-to-one with Site)"
   },
   "options": {
     "draftAndPublish": true
@@ -19,9 +19,9 @@
   "attributes": {
     "site": {
       "type": "relation",
-      "relation": "manyToOne",
+      "relation": "oneToOne",
       "target": "api::site.site",
-      "inversedBy": "footers"
+      "inversedBy": "footer"
     },
     "logo": {
       "type": "media",

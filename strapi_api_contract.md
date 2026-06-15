@@ -459,8 +459,8 @@ Product → category → site
 | `blogs` | relation oneToMany → Blog | — | 反向关系，该站点下的所有博客文章 |
 | `news_articles` | relation oneToMany → News | — | 反向关系，该站点下的所有新闻 |
 | `pages` | relation oneToMany → Page | — | 反向关系，该站点下的所有自定义页面 |
-| `menus` | relation oneToMany → Menu | — | 反向关系，该站点下的所有导航菜单项 |
-| `footers` | relation oneToMany → Footer | — | 反向关系，该站点下的页脚配置（通常 1 条） |
+| `menu` | relation oneToOne → Menu | — | 该站点的导航菜单（一对一，含递归 items JSON） |
+| `footer` | relation oneToOne → Footer | — | 该站点的页脚配置（一对一，含 columns/bottom_links） |
 
 **注意**：`blogs` 和 `news_articles` 的 API 响应中字段名与 relation 名一致（即 `blogs` 和 `news_articles`），不是 `blog`/`news`。
 
@@ -491,11 +491,11 @@ Product → category → site
   "pages": {
     "data": []
   },
-  "menus": {
-    "data": []
+  "menu": {
+    "data": null
   },
-  "footers": {
-    "data": []
+  "footer": {
+    "data": null
   }
 }
 ```
@@ -655,35 +655,35 @@ Product → category → site
 
 **端点**: `GET /api/menus?locale=<lang>&populate=*&filters[site][documentId][$eq]=<site_documentId>&filters[publishedAt][$notNull]=true`
 
-**类型**: Collection Type，支持自引用递归嵌套
+**类型**: Collection Type
 
 **draftAndPublish**: `true`
 
 **i18n**: 已启用
 
+**与 Site 关系**: **一对一**（每个 Site 最多一条 Menu 记录）
+
 | 字段 | 类型 | i18n | 必填 | 说明 |
 |------|------|------|------|------|
-| `title` | string | localized | 是 | 菜单项显示文本 |
-| `slug` | uid (from title) | **不** localized | 自动 | URL 标识 |
-| `type` | enum: link/dropdown/cta_button | **不** localized | 否 | 默认 `link` |
-| `url` | string | **不** localized | 否 | 自定义链接（留空则用 slug 生成路由） |
-| `order` | integer | **不** localized | 否 | 排序权重，默认 `0` |
-| `open_new_tab` | boolean | **不** localized | 否 | 是否新窗口打开，默认 `false` |
-| `site` | relation manyToOne → Site | — | 否 | 所属站点 |
-| `parent` | relation manyToOne → Menu (self) | — | 否 | 父级菜单项（用于下拉） |
-| `children` | relation oneToMany → Menu (self) | — | — | 子菜单项（反向） |
+| `site` | relation **oneToOne** → Site | — | 否 | 所属站点（一对一） |
+| `items` | json | **localized** | 否 | 递归菜单树结构 |
 
-**`type` 取值说明**：
+**`items` JSON 结构** — 每个菜单项可递归嵌套 children：
 
-| 值 | 渲染方式 |
-|----|---------|
-| `link` | 普通 `<a>` 链接 |
-| `dropdown` | 下拉菜单，包含 `children` |
-| `cta_button` | CTA 按钮样式（如 "Get Quote"） |
+```typescript
+interface MenuItem {
+  title: string          // 显示文本
+  slug: string           // URL 标识
+  type: "link" | "dropdown" | "cta_button"
+  url: string | null     // 自定义链接（null 时用 slug 生成路由）
+  open_new_tab: boolean
+  children: MenuItem[]   // 递归子菜单（dropdown 类型的子项）
+}
 
-**层级结构**：`parent` + `children` 支持无限递归嵌套。渲染时按 `order` 升序排列，同级内 `order` 相同按 `id` 排序。
+// items: MenuItem[]
+```
 
-**响应示例** (`locale=en`, 含嵌套子菜单)：
+**响应示例** (`locale=en`)：
 
 ```json
 {
@@ -692,99 +692,67 @@ Product → category → site
       "id": 1,
       "documentId": "menu1",
       "locale": "en",
-      "title": "Products",
-      "slug": "products",
-      "type": "dropdown",
-      "url": null,
-      "order": 1,
-      "open_new_tab": false,
-      "site": { "data": { "id": 1, "documentId": "site1" } },
-      "parent": { "data": null },
-      "children": {
-        "data": [
-          {
-            "id": 2,
-            "documentId": "menu2",
-            "title": "Treadmills",
-            "slug": "treadmills",
-            "type": "link",
-            "url": "/products/treadmills",
-            "order": 0,
-            "parent": { "data": { "id": 1, "documentId": "menu1" } },
-            "children": { "data": [] }
-          },
-          {
-            "id": 3,
-            "documentId": "menu3",
-            "title": "Exercise Bikes",
-            "slug": "exercise-bikes",
-            "type": "link",
-            "url": "/products/exercise-bikes",
-            "order": 1,
-            "parent": { "data": { "id": 1, "documentId": "menu1" } },
-            "children": { "data": [] }
-          }
-        ]
-      }
-    },
-    {
-      "id": 4,
-      "documentId": "menu4",
-      "title": "About Us",
-      "slug": "about-us",
-      "type": "link",
-      "url": null,
-      "order": 2,
-      "site": { "data": { "id": 1, "documentId": "site1" } },
-      "parent": { "data": null },
-      "children": { "data": [] }
-    },
-    {
-      "id": 5,
-      "documentId": "menu5",
-      "title": "Get Quote",
-      "slug": "get-quote",
-      "type": "cta_button",
-      "url": "/contact-us",
-      "order": 99,
-      "site": { "data": { "id": 1, "documentId": "site1" } },
-      "parent": { "data": null },
-      "children": { "data": [] }
+      "site": { "data": { "id": 1, "documentId": "site1", "name": "FitGear Pro" } },
+      "items": [
+        {
+          "title": "Products",
+          "slug": "products",
+          "type": "dropdown",
+          "url": null,
+          "open_new_tab": false,
+          "children": [
+            { "title": "Treadmills", "slug": "treadmills", "type": "link", "url": "/products/treadmills", "open_new_tab": false, "children": [] },
+            { "title": "Exercise Bikes", "slug": "exercise-bikes", "type": "link", "url": "/products/exercise-bikes", "open_new_tab": false, "children": [] },
+            { "title": "View All Products", "slug": "view-all", "type": "link", "url": "/products", "open_new_tab": false, "children": [] }
+          ]
+        },
+        {
+          "title": "About Us",
+          "slug": "about-us",
+          "type": "dropdown",
+          "url": null,
+          "open_new_tab": false,
+          "children": [
+            { "title": "Company", "slug": "company", "type": "link", "url": "/pages/about", "open_new_tab": false, "children": [] },
+            { "title": "Quality Control", "slug": "quality-control", "type": "link", "url": "/pages/quality-control", "open_new_tab": false, "children": [] }
+          ]
+        },
+        {
+          "title": "Blog",
+          "slug": "blog",
+          "type": "link",
+          "url": null,
+          "open_new_tab": false,
+          "children": []
+        },
+        {
+          "title": "Get Quote",
+          "slug": "get-quote",
+          "type": "cta_button",
+          "url": "/pages/contact-us",
+          "open_new_tab": false,
+          "children": []
+        }
+      ]
     }
   ],
-  "meta": { "pagination": { "page": 1, "pageSize": 100, "pageCount": 1, "total": 5 } }
+  "meta": { "pagination": { "page": 1, "pageSize": 25, "pageCount": 1, "total": 1 } }
 }
 ```
 
 **Astro 使用方式**：
 
-- 按 `site.documentId` 过滤获取站点专属菜单
-- 构建菜单树：遍历 `menus`，按 `parent` 关系组装层级
+- 按 `site.documentId` 过滤，每个站点仅返回 **1 条** 记录（一对一）
+- 直接读取 `items` JSON 数组渲染导航树
+- 递归渲染：遍历 `items`，如果 `item.children.length > 0` 则渲染为下拉
 - 渲染规则：
-  - `type=link` → `<a href={url || slug}>`
-  - `type=dropdown` → 渲染 `<li>` 含子 `<ul>` 嵌套 children
-  - `type=cta_button` → 渲染为按钮样式链接
-- 排序：同级按 `order` 升序
-- 活跃状态：通过当前 URL 匹配 `slug` 或 `url`
+  - `type=link` → `<a href={item.url || '/' + item.slug}>`
+  - `type=dropdown` → 含嵌套 `<ul>` 的 `<li>`，递归渲染 `item.children`
+  - `type=cta_button` → 按钮样式 `<a>`
+- 活跃状态：通过当前 URL 匹配 `item.slug` 或 `item.url`
+- i18n：每个 locale 返回独立翻译的 `items` JSON（`title` 已翻译）
 
 **Webhook**: `afterUpdate` lifecycle → `logBuildWebhook(strapi, 'api::menu.menu', documentId)`。
-
-**B2B 营销网站典型菜单结构**：
-
-```
-Home (link)
-Products (dropdown)
-  ├── Treadmills (link → /products/treadmills)
-  ├── Exercise Bikes (link → /products/exercise-bikes)
-  └── View All Products (link → /products)
-About Us (dropdown)
-  ├── Company (link → /pages/about)
-  ├── Quality Control (link → /pages/quality-control)
-  └── Factory Tour (link → /pages/factory-tour)
-Blog (link → /blog)
-Contact Us (link → /pages/contact-us)
-Get Quote (cta_button → /pages/contact-us)
-```
 
 ---
 
@@ -792,15 +760,17 @@ Get Quote (cta_button → /pages/contact-us)
 
 **端点**: `GET /api/footers?locale=<lang>&populate=*&filters[site][documentId][$eq]=<site_documentId>&filters[publishedAt][$notNull]=true`
 
-**类型**: Collection Type（通常每个 Site 只有一条 Footer 记录）
+**类型**: Collection Type
 
 **draftAndPublish**: `true`
 
 **i18n**: 已启用
 
+**与 Site 关系**: **一对一**（每个 Site 最多一条 Footer 记录）
+
 | 字段 | 类型 | i18n | 必填 | 说明 |
 |------|------|------|------|------|
-| `site` | relation manyToOne → Site | — | 否 | 所属站点 |
+| `site` | relation **oneToOne** → Site | — | 否 | 所属站点（一对一） |
 | `logo` | media (single, images) | — | 否 | 页脚 Logo |
 | `description` | text | localized | 否 | 公司简介（显示于页脚） |
 | `columns` | component `elements.footer-section` (repeatable) | localized | 否 | 链接列组 |
@@ -1288,7 +1258,7 @@ GET /api/categories?sort=name:asc
 | Product | name, description, images, videos, seo_* | slug, sku, model_no, price, currency, moq, status, category |
 | Blog | title, content, featured_image, seo_* | slug, status, site |
 | News | title, content, featured_image, seo_* | slug, status, site |
-| Menu | title | slug, type, url, order, open_new_tab, site, parent |
+| Menu | items (整个 JSON 树 localized) | site |
 | Footer | description, columns, bottom_text, bottom_links | site, logo, social_links |
 | Site | （不适用，无 i18n） | 所有字段 |
 
@@ -1395,9 +1365,9 @@ export async function strapiFetch<T>(
 ```
 Astro Build Start
   ├── fetchGlobal(locale)           → Global 单例 (navbar, footer 组件已废弃，改用 Menu/Footer)
-  ├── fetchSite(documentId)         → Site 配置
-  ├── fetchMenus(locale, siteId)    → Menu[] (构建导航树)
-  ├── fetchFooter(locale, siteId)   → Footer (页脚配置)
+  ├── fetchSite(documentId)         → Site 配置 (含 menu/footer 一对一关系)
+  ├── fetchMenu(locale, siteId)     → Menu (单条, 解析 items JSON 树)
+  ├── fetchFooter(locale, siteId)   → Footer (单条, columns + bottom_links)
   ├── fetchAllPages(locale)         → Page[] (含 contentSections)
   ├── fetchAllCategories(locale)    → Category[] (构建树)
   ├── fetchAllProducts(locale)      → Product[] (按 category 分组)

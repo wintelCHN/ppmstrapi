@@ -598,7 +598,7 @@ export interface ApiCategoryCategory extends Struct.CollectionTypeSchema {
 export interface ApiFooterFooter extends Struct.CollectionTypeSchema {
   collectionName: 'footers';
   info: {
-    description: 'Site footer with column-based link groups and legal links';
+    description: 'Per-site footer configuration (one-to-one with Site)';
     displayName: 'Footer';
     name: 'footer';
     pluralName: 'footers';
@@ -644,7 +644,7 @@ export interface ApiFooterFooter extends Struct.CollectionTypeSchema {
     localizations: Schema.Attribute.Relation<'oneToMany', 'api::footer.footer'>;
     logo: Schema.Attribute.Media<'images'>;
     publishedAt: Schema.Attribute.DateTime;
-    site: Schema.Attribute.Relation<'manyToOne', 'api::site.site'>;
+    site: Schema.Attribute.Relation<'oneToOne', 'api::site.site'>;
     social_links: Schema.Attribute.JSON &
       Schema.Attribute.SetPluginOptions<{
         i18n: {
@@ -761,7 +761,7 @@ export interface ApiLeadFormSubmissionLeadFormSubmission
 export interface ApiMenuMenu extends Struct.CollectionTypeSchema {
   collectionName: 'menus';
   info: {
-    description: 'Site navigation menu with recursive nesting support';
+    description: 'Per-site navigation menu with recursive tree (one-to-one with Site)';
     displayName: 'Menu';
     name: 'menu';
     pluralName: 'menus';
@@ -776,58 +776,22 @@ export interface ApiMenuMenu extends Struct.CollectionTypeSchema {
     };
   };
   attributes: {
-    children: Schema.Attribute.Relation<'oneToMany', 'api::menu.menu'>;
     createdAt: Schema.Attribute.DateTime;
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
-    locale: Schema.Attribute.String;
-    localizations: Schema.Attribute.Relation<'oneToMany', 'api::menu.menu'>;
-    open_new_tab: Schema.Attribute.Boolean &
-      Schema.Attribute.SetPluginOptions<{
-        i18n: {
-          localized: false;
-        };
-      }> &
-      Schema.Attribute.DefaultTo<false>;
-    order: Schema.Attribute.Integer &
-      Schema.Attribute.SetPluginOptions<{
-        i18n: {
-          localized: false;
-        };
-      }> &
-      Schema.Attribute.DefaultTo<0>;
-    parent: Schema.Attribute.Relation<'manyToOne', 'api::menu.menu'>;
-    publishedAt: Schema.Attribute.DateTime;
-    site: Schema.Attribute.Relation<'manyToOne', 'api::site.site'>;
-    slug: Schema.Attribute.UID<'title'> &
-      Schema.Attribute.SetPluginOptions<{
-        i18n: {
-          localized: false;
-        };
-      }>;
-    title: Schema.Attribute.String &
-      Schema.Attribute.Required &
+    items: Schema.Attribute.JSON &
       Schema.Attribute.SetPluginOptions<{
         i18n: {
           localized: true;
         };
       }>;
-    type: Schema.Attribute.Enumeration<['link', 'dropdown', 'cta_button']> &
-      Schema.Attribute.SetPluginOptions<{
-        i18n: {
-          localized: false;
-        };
-      }> &
-      Schema.Attribute.DefaultTo<'link'>;
+    locale: Schema.Attribute.String;
+    localizations: Schema.Attribute.Relation<'oneToMany', 'api::menu.menu'>;
+    publishedAt: Schema.Attribute.DateTime;
+    site: Schema.Attribute.Relation<'oneToOne', 'api::site.site'>;
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
-    url: Schema.Attribute.String &
-      Schema.Attribute.SetPluginOptions<{
-        i18n: {
-          localized: false;
-        };
-      }>;
   };
 }
 
@@ -1136,13 +1100,13 @@ export interface ApiSiteSite extends Struct.CollectionTypeSchema {
       ['vercel', 'cloudflare-pages', 'netlify']
     >;
     description: Schema.Attribute.Text;
-    footers: Schema.Attribute.Relation<'oneToMany', 'api::footer.footer'>;
+    footer: Schema.Attribute.Relation<'oneToOne', 'api::footer.footer'>;
     github_branch: Schema.Attribute.String & Schema.Attribute.DefaultTo<'main'>;
     github_repo: Schema.Attribute.String;
     locale: Schema.Attribute.String & Schema.Attribute.Private;
     localizations: Schema.Attribute.Relation<'oneToMany', 'api::site.site'> &
       Schema.Attribute.Private;
-    menus: Schema.Attribute.Relation<'oneToMany', 'api::menu.menu'>;
+    menu: Schema.Attribute.Relation<'oneToOne', 'api::menu.menu'>;
     name: Schema.Attribute.String & Schema.Attribute.Required;
     news_articles: Schema.Attribute.Relation<'oneToMany', 'api::news.news'>;
     notes: Schema.Attribute.Blocks;

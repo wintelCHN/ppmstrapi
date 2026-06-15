@@ -6,7 +6,7 @@
     "pluralName": "menus",
     "displayName": "Menu",
     "name": "menu",
-    "description": "Site navigation menu with recursive nesting support"
+    "description": "Per-site navigation menu with recursive tree (one-to-one with Site)"
   },
   "options": {
     "draftAndPublish": true
@@ -17,77 +17,19 @@
     }
   },
   "attributes": {
-    "title": {
-      "type": "string",
-      "required": true,
+    "site": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "api::site.site",
+      "inversedBy": "menu"
+    },
+    "items": {
+      "type": "json",
       "pluginOptions": {
         "i18n": {
           "localized": true
         }
       }
-    },
-    "slug": {
-      "type": "uid",
-      "targetField": "title",
-      "pluginOptions": {
-        "i18n": {
-          "localized": false
-        }
-      }
-    },
-    "type": {
-      "type": "enumeration",
-      "enum": ["link", "dropdown", "cta_button"],
-      "default": "link",
-      "pluginOptions": {
-        "i18n": {
-          "localized": false
-        }
-      }
-    },
-    "url": {
-      "type": "string",
-      "pluginOptions": {
-        "i18n": {
-          "localized": false
-        }
-      }
-    },
-    "order": {
-      "type": "integer",
-      "default": 0,
-      "pluginOptions": {
-        "i18n": {
-          "localized": false
-        }
-      }
-    },
-    "open_new_tab": {
-      "type": "boolean",
-      "default": false,
-      "pluginOptions": {
-        "i18n": {
-          "localized": false
-        }
-      }
-    },
-    "site": {
-      "type": "relation",
-      "relation": "manyToOne",
-      "target": "api::site.site",
-      "inversedBy": "menus"
-    },
-    "parent": {
-      "type": "relation",
-      "relation": "manyToOne",
-      "target": "api::menu.menu",
-      "inversedBy": "children"
-    },
-    "children": {
-      "type": "relation",
-      "relation": "oneToMany",
-      "target": "api::menu.menu",
-      "mappedBy": "parent"
     }
   }
 }
