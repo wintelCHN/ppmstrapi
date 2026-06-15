@@ -92,11 +92,11 @@
       "target": "api::page.page",
       "mappedBy": "site"
     },
-    "menu": {
+    "menus": {
       "type": "relation",
-      "relation": "oneToOne",
+      "relation": "oneToMany",
       "target": "api::menu.menu",
-      "inversedBy": "site"
+      "mappedBy": "site"
     },
     "footer": {
       "type": "relation",

@@ -761,7 +761,7 @@ export interface ApiLeadFormSubmissionLeadFormSubmission
 export interface ApiMenuMenu extends Struct.CollectionTypeSchema {
   collectionName: 'menus';
   info: {
-    description: 'Per-site navigation menu with recursive tree (one-to-one with Site)';
+    description: 'Site navigation menu items with recursive nesting, can link to Categories or Pages';
     displayName: 'Menu';
     name: 'menu';
     pluralName: 'menus';
@@ -776,22 +776,60 @@ export interface ApiMenuMenu extends Struct.CollectionTypeSchema {
     };
   };
   attributes: {
+    category: Schema.Attribute.Relation<'manyToOne', 'api::category.category'>;
+    children: Schema.Attribute.Relation<'oneToMany', 'api::menu.menu'>;
     createdAt: Schema.Attribute.DateTime;
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
-    items: Schema.Attribute.JSON &
+    display_mode: Schema.Attribute.Enumeration<['inline', 'dropdown', 'mega']> &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: false;
+        };
+      }> &
+      Schema.Attribute.DefaultTo<'inline'>;
+    link_type: Schema.Attribute.Enumeration<['category', 'page', 'custom']> &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: false;
+        };
+      }> &
+      Schema.Attribute.DefaultTo<'custom'>;
+    locale: Schema.Attribute.String;
+    localizations: Schema.Attribute.Relation<'oneToMany', 'api::menu.menu'>;
+    open_new_tab: Schema.Attribute.Boolean &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: false;
+        };
+      }> &
+      Schema.Attribute.DefaultTo<false>;
+    order: Schema.Attribute.Integer &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: false;
+        };
+      }> &
+      Schema.Attribute.DefaultTo<0>;
+    page: Schema.Attribute.Relation<'manyToOne', 'api::page.page'>;
+    parent: Schema.Attribute.Relation<'manyToOne', 'api::menu.menu'>;
+    publishedAt: Schema.Attribute.DateTime;
+    site: Schema.Attribute.Relation<'manyToOne', 'api::site.site'>;
+    title: Schema.Attribute.String &
       Schema.Attribute.SetPluginOptions<{
         i18n: {
           localized: true;
         };
       }>;
-    locale: Schema.Attribute.String;
-    localizations: Schema.Attribute.Relation<'oneToMany', 'api::menu.menu'>;
-    publishedAt: Schema.Attribute.DateTime;
-    site: Schema.Attribute.Relation<'oneToOne', 'api::site.site'>;
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
+    url: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: false;
+        };
+      }>;
   };
 }
 
@@ -1106,7 +1144,7 @@ export interface ApiSiteSite extends Struct.CollectionTypeSchema {
     locale: Schema.Attribute.String & Schema.Attribute.Private;
     localizations: Schema.Attribute.Relation<'oneToMany', 'api::site.site'> &
       Schema.Attribute.Private;
-    menu: Schema.Attribute.Relation<'oneToOne', 'api::menu.menu'>;
+    menus: Schema.Attribute.Relation<'oneToMany', 'api::menu.menu'>;
     name: Schema.Attribute.String & Schema.Attribute.Required;
     news_articles: Schema.Attribute.Relation<'oneToMany', 'api::news.news'>;
     notes: Schema.Attribute.Blocks;

@@ -459,7 +459,7 @@ Product → category → site
 | `blogs` | relation oneToMany → Blog | — | 反向关系，该站点下的所有博客文章 |
 | `news_articles` | relation oneToMany → News | — | 反向关系，该站点下的所有新闻 |
 | `pages` | relation oneToMany → Page | — | 反向关系，该站点下的所有自定义页面 |
-| `menu` | relation oneToOne → Menu | — | 该站点的导航菜单（一对一，含递归 items JSON） |
+| `menus` | relation oneToMany → Menu | — | 该站点的导航菜单项（通过 parent/children 组装树） |
 | `footer` | relation oneToOne → Footer | — | 该站点的页脚配置（一对一，含 columns/bottom_links） |
 
 **注意**：`blogs` 和 `news_articles` 的 API 响应中字段名与 relation 名一致（即 `blogs` 和 `news_articles`），不是 `blog`/`news`。
@@ -491,8 +491,8 @@ Product → category → site
   "pages": {
     "data": []
   },
-  "menu": {
-    "data": null
+  "menus": {
+    "data": []
   },
   "footer": {
     "data": null
@@ -653,35 +653,51 @@ Product → category → site
 
 ### 4.8 Menu (导航菜单)
 
-**端点**: `GET /api/menus?locale=<lang>&populate=*&filters[site][documentId][$eq]=<site_documentId>&filters[publishedAt][$notNull]=true`
+**端点**: `GET /api/menus?locale=<lang>&populate[category][fields][0]=slug&populate[page][fields][0]=slug&populate[parent]=*&populate[children]=*&filters[site][documentId][$eq]=<site_documentId>&filters[publishedAt][$notNull]=true&sort=order:asc`
 
-**类型**: Collection Type
+**类型**: Collection Type，自引用递归嵌套
 
 **draftAndPublish**: `true`
 
 **i18n**: 已启用
 
-**与 Site 关系**: **一对一**（每个 Site 最多一条 Menu 记录）
+**与 Site 关系**: 一个 Site 有多个 Menu 条目，共同组成该站点的导航菜单树
 
 | 字段 | 类型 | i18n | 必填 | 说明 |
 |------|------|------|------|------|
-| `site` | relation **oneToOne** → Site | — | 否 | 所属站点（一对一） |
-| `items` | json | **localized** | 否 | 递归菜单树结构 |
+| `title` | string | localized | 否 | 菜单显示文本（为空时自动取关联内容标题） |
+| `link_type` | enum: category/page/custom | **不** localized | 是 | 链接类型 |
+| `category` | relation manyToOne → Category | — | 否 | 关联产品分类（link_type=category） |
+| `page` | relation manyToOne → Page | — | 否 | 关联页面（link_type=page） |
+| `url` | string | **不** localized | 否 | 自定义链接（link_type=custom） |
+| `order` | integer | **不** localized | 否 | 排序权重，默认 `0`，同级按 order 升序 |
+| `open_new_tab` | boolean | **不** localized | 否 | 新窗口打开，默认 `false` |
+| `display_mode` | enum: inline/dropdown/mega | **不** localized | 否 | 展示方式：行内 / 下拉 / 大型菜单 |
+| `site` | relation manyToOne → Site | — | 否 | 所属站点 |
+| `parent` | relation manyToOne → Menu (self) | — | 否 | 父级菜单项 |
+| `children` | relation oneToMany → Menu (self) | — | — | 子级菜单项（反向） |
 
-**`items` JSON 结构** — 每个菜单项可递归嵌套 children：
+**`link_type` 决定 URL 生成逻辑**：
 
-```typescript
-interface MenuItem {
-  title: string          // 显示文本
-  slug: string           // URL 标识
-  type: "link" | "dropdown" | "cta_button"
-  url: string | null     // 自定义链接（null 时用 slug 生成路由）
-  open_new_tab: boolean
-  children: MenuItem[]   // 递归子菜单（dropdown 类型的子项）
-}
+| link_type | 取值 | Astro 处理 |
+|-----------|------|------------|
+| `category` | 读取 `category.slug` | → URL: `/products/<category.slug>` |
+| `page` | 读取 `page.slug` | → URL: `/<page.slug>`（空字符串时指向首页 `/`） |
+| `custom` | 读取 `url` 字段 | → URL: 直接使用 `url` |
 
-// items: MenuItem[]
-```
+**`display_mode` 决定渲染方式**：
+
+| 值 | 渲染 |
+|----|------|
+| `inline` | 普通行内链接 |
+| `dropdown` | 下拉菜单，鼠标悬停展示 `children` |
+| `mega` | 大型菜单，`children` 以多列方式展示 |
+
+**Category 自动嵌套**（重要）：
+
+- 当 `link_type=category` 时，Astro 可选择自动读取该 Category 的 `children`（子分类），将它们作为菜单子项渲染
+- 这样管理员在 Category 中维护分类层级后，Menu 自动继承该结构
+- 如果 Menu 条目手动设置了 `children`，则手动 children 优先，不自动展开 Category
 
 **响应示例** (`locale=en`)：
 
@@ -690,69 +706,148 @@ interface MenuItem {
   "data": [
     {
       "id": 1,
-      "documentId": "menu1",
+      "documentId": "mnu1",
       "locale": "en",
-      "site": { "data": { "id": 1, "documentId": "site1", "name": "FitGear Pro" } },
-      "items": [
-        {
-          "title": "Products",
-          "slug": "products",
-          "type": "dropdown",
-          "url": null,
-          "open_new_tab": false,
-          "children": [
-            { "title": "Treadmills", "slug": "treadmills", "type": "link", "url": "/products/treadmills", "open_new_tab": false, "children": [] },
-            { "title": "Exercise Bikes", "slug": "exercise-bikes", "type": "link", "url": "/products/exercise-bikes", "open_new_tab": false, "children": [] },
-            { "title": "View All Products", "slug": "view-all", "type": "link", "url": "/products", "open_new_tab": false, "children": [] }
-          ]
-        },
-        {
-          "title": "About Us",
-          "slug": "about-us",
-          "type": "dropdown",
-          "url": null,
-          "open_new_tab": false,
-          "children": [
-            { "title": "Company", "slug": "company", "type": "link", "url": "/pages/about", "open_new_tab": false, "children": [] },
-            { "title": "Quality Control", "slug": "quality-control", "type": "link", "url": "/pages/quality-control", "open_new_tab": false, "children": [] }
-          ]
-        },
-        {
-          "title": "Blog",
-          "slug": "blog",
-          "type": "link",
-          "url": null,
-          "open_new_tab": false,
-          "children": []
-        },
-        {
-          "title": "Get Quote",
-          "slug": "get-quote",
-          "type": "cta_button",
-          "url": "/pages/contact-us",
-          "open_new_tab": false,
-          "children": []
-        }
-      ]
+      "title": "Products",
+      "link_type": "custom",
+      "category": null,
+      "page": null,
+      "url": "/products",
+      "order": 1,
+      "open_new_tab": false,
+      "display_mode": "dropdown",
+      "site": { "data": { "id": 1, "documentId": "site1" } },
+      "parent": { "data": null },
+      "children": {
+        "data": [
+          {
+            "id": 2,
+            "documentId": "mnu2",
+            "title": "Treadmills",
+            "link_type": "category",
+            "category": { "data": { "id": 30, "documentId": "sfu2fs79m...", "slug": "treadmills" } },
+            "page": null,
+            "url": null,
+            "order": 0,
+            "display_mode": "inline",
+            "parent": { "data": { "id": 1, "documentId": "mnu1" } },
+            "children": { "data": [] }
+          },
+          {
+            "id": 3,
+            "documentId": "mnu3",
+            "title": "Exercise Bikes",
+            "link_type": "category",
+            "category": { "data": { "id": 31, "documentId": "qq0m1uso...", "slug": "exercise-bikes" } },
+            "page": null,
+            "url": null,
+            "order": 1,
+            "display_mode": "inline",
+            "parent": { "data": { "id": 1, "documentId": "mnu1" } },
+            "children": { "data": [] }
+          }
+        ]
+      }
+    },
+    {
+      "id": 4,
+      "documentId": "mnu4",
+      "title": "About Us",
+      "link_type": "page",
+      "category": null,
+      "page": { "data": { "id": 11, "documentId": "ild3cy82...", "slug": "about-fitgear" } },
+      "url": null,
+      "order": 2,
+      "display_mode": "dropdown",
+      "site": { "data": { "id": 1, "documentId": "site1" } },
+      "parent": { "data": null },
+      "children": {
+        "data": [
+          {
+            "id": 5,
+            "documentId": "mnu5",
+            "title": "Quality Control",
+            "link_type": "page",
+            "page": { "data": { "id": 13, "documentId": "d6oufuft...", "slug": "quality-control" } },
+            "url": null,
+            "order": 0,
+            "display_mode": "inline",
+            "parent": { "data": { "id": 4, "documentId": "mnu4" } },
+            "children": { "data": [] }
+          }
+        ]
+      }
+    },
+    {
+      "id": 6,
+      "documentId": "mnu6",
+      "title": "Blog",
+      "link_type": "custom",
+      "category": null,
+      "page": null,
+      "url": "/blog",
+      "order": 3,
+      "display_mode": "inline",
+      "site": { "data": { "id": 1, "documentId": "site1" } },
+      "parent": { "data": null },
+      "children": { "data": [] }
+    },
+    {
+      "id": 7,
+      "documentId": "mnu7",
+      "title": "Get Quote",
+      "link_type": "custom",
+      "category": null,
+      "page": null,
+      "url": "/contact-us",
+      "order": 99,
+      "display_mode": "inline",
+      "site": { "data": { "id": 1, "documentId": "site1" } },
+      "parent": { "data": null },
+      "children": { "data": [] }
     }
   ],
-  "meta": { "pagination": { "page": 1, "pageSize": 25, "pageCount": 1, "total": 1 } }
+  "meta": { "pagination": { "page": 1, "pageSize": 100, "pageCount": 1, "total": 7 } }
 }
 ```
 
 **Astro 使用方式**：
 
-- 按 `site.documentId` 过滤，每个站点仅返回 **1 条** 记录（一对一）
-- 直接读取 `items` JSON 数组渲染导航树
-- 递归渲染：遍历 `items`，如果 `item.children.length > 0` 则渲染为下拉
+- 按 `site.documentId` 过滤 + `sort=order:asc` 获取所有菜单项
+- 构建菜单树：找到 `parent=null` 的顶层条目，遍历 `children` 递归
+- Category 自动展开（推荐）：当 `link_type=category` 且无 `children` 时，Astro 可用 Category 的 `children` 自动生成子菜单
+- URL 生成规则：
+  ```
+  link_type=category → "/products/" + category.slug
+  link_type=page     → "/" + page.slug (空串=首页/)
+  link_type=custom   → url
+  ```
 - 渲染规则：
-  - `type=link` → `<a href={item.url || '/' + item.slug}>`
-  - `type=dropdown` → 含嵌套 `<ul>` 的 `<li>`，递归渲染 `item.children`
-  - `type=cta_button` → 按钮样式 `<a>`
-- 活跃状态：通过当前 URL 匹配 `item.slug` 或 `item.url`
-- i18n：每个 locale 返回独立翻译的 `items` JSON（`title` 已翻译）
+  - `display_mode=inline` → `<a>` 标签
+  - `display_mode=dropdown` → 下拉菜单（含 children 的 `<ul>` 嵌套）
+  - `display_mode=mega` → 大型多列菜单
+- `title` 为空时 fallback：category.name → page.shortName → "Untitled"
+- 活跃状态匹配：通过 URL 与 category.slug / page.slug / url 对比
 
 **Webhook**: `afterUpdate` lifecycle → `logBuildWebhook(strapi, 'api::menu.menu', documentId)`。
+
+**B2B 营销网站典型 Menu 结构**：
+
+```
+Home (page → slug="" 首页)
+Products (dropdown, children 手动添加 category 项)
+  ├── Treadmills (category → "treadmills")
+  ├── Exercise Bikes (category → "exercise-bikes")
+  ├── Home Gyms (category → "home-gyms")
+  └── All Products (custom → "/products")
+About Us (dropdown, children 手动添加 page 项)
+  ├── Company (page → "about-fitgear")
+  ├── Quality Control (page → "quality-control")
+  └── OEM/ODM (page → "oem-odm-services")
+Blog (custom → "/blog")
+Contact (custom → "/pages/contact-us")
+Get Quote (custom → "/pages/contact-us", 按钮样式)
+```
 
 ---
 
@@ -1258,7 +1353,7 @@ GET /api/categories?sort=name:asc
 | Product | name, description, images, videos, seo_* | slug, sku, model_no, price, currency, moq, status, category |
 | Blog | title, content, featured_image, seo_* | slug, status, site |
 | News | title, content, featured_image, seo_* | slug, status, site |
-| Menu | items (整个 JSON 树 localized) | site |
+| Menu | title | link_type, category, page, url, order, open_new_tab, display_mode, site, parent |
 | Footer | description, columns, bottom_text, bottom_links | site, logo, social_links |
 | Site | （不适用，无 i18n） | 所有字段 |
 
