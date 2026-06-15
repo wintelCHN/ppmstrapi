@@ -459,7 +459,7 @@ Product → category → site
 | `blogs` | relation oneToMany → Blog | — | 反向关系，该站点下的所有博客文章 |
 | `news_articles` | relation oneToMany → News | — | 反向关系，该站点下的所有新闻 |
 | `pages` | relation oneToMany → Page | — | 反向关系，该站点下的所有自定义页面 |
-| `menu` | relation oneToOne → Menu | — | 该站点的导航菜单（一对一，含 items JSON 树） |
+| `menus` | relation oneToMany → Menu | — | 该站点的所有导航菜单项（通过 parent/children 组装树） |
 | `footer` | relation oneToOne → Footer | — | 该站点的页脚配置（一对一，含 columns/bottom_links） |
 
 **注意**：`blogs` 和 `news_articles` 的 API 响应中字段名与 relation 名一致（即 `blogs` 和 `news_articles`），不是 `blog`/`news`。
@@ -491,8 +491,8 @@ Product → category → site
   "pages": {
     "data": []
   },
-  "menu": {
-    "data": null
+  "menus": {
+    "data": []
   },
   "footer": {
     "data": null
@@ -653,211 +653,125 @@ Product → category → site
 
 ### 4.8 Menu (导航菜单)
 
-**端点**: `GET /api/menus?locale=<lang>&populate=*&filters[site][documentId][$eq]=<site_documentId>&filters[publishedAt][$notNull]=true`
+**端点**: `GET /api/menus?locale=<lang>&populate[category][fields][0]=slug&populate[page][fields][0]=slug&populate[parent]=*&populate[children][populate][category][fields][0]=slug&populate[children][populate][page][fields][0]=slug&filters[site][documentId][$eq]=<site_documentId>&filters[publishedAt][$notNull]=true&sort=order:asc`
 
-**类型**: Collection Type
+**类型**: Collection Type，每个条目是一个菜单项，通过 `parent`/`children` 递归嵌套
 
 **draftAndPublish**: `true`
 
 **i18n**: 已启用
 
-**与 Site 关系**: **一对一**（每个 Site 一条 Menu 记录，内含完整导航树 JSON）
-
 | 字段 | 类型 | i18n | 必填 | 说明 |
 |------|------|------|------|------|
-| `site` | relation **oneToOne** → Site | — | 否 | 所属站点（一对一） |
-| `items` | json | **localized** | 是 | 完整导航树，每个 locale 独立翻译 |
+| `title` | string | localized | 否 | 显示文本（为空时取关联内容标题） |
+| `link_type` | enum: category/page/custom | **不** | — | 默认 `custom` |
+| `category` | relation manyToOne → Category | — | 否 | link_type=category 时选择 |
+| `page` | relation manyToOne → Page | — | 否 | link_type=page 时选择 |
+| `url` | string | **不** | 否 | link_type=custom 时填写 |
+| `order` | integer | **不** | 否 | 同级排序，默认 0 |
+| `open_new_tab` | boolean | **不** | 否 | 默认 false |
+| `display_mode` | enum: inline/dropdown/mega | **不** | 否 | 默认 `inline` |
+| `site` | relation manyToOne → Site | — | 否 | 所属站点 |
+| `parent` | relation manyToOne → Menu (self) | — | 否 | 父级菜单项 |
+| `children` | relation oneToMany → Menu (self) | — | — | 子菜单项（反向） |
 
-**`items` JSON 结构**：
+**三个核心场景**：
 
-```typescript
-interface MenuItem {
-  title: string                      // 显示文本
-  link_type: "category" | "page" | "custom"
-  category_documentId: string | null  // 关联 Category 的 documentId
-  page_documentId: string | null      // 关联 Page 的 documentId
-  url: string | null                  // 自定义 URL（link_type=custom 时使用）
-  open_new_tab: boolean
-  display_mode: "inline" | "dropdown" | "mega"
-  children: MenuItem[]                // 递归嵌套子菜单
-}
+### 场景 1：Products 菜单（关联产品分类）
 
-// items: MenuItem[]
+> 管理员创建一个 `display_mode=dropdown` 的顶层条目 "Products"，然后在 children 中逐个添加 `link_type=category` 的子条目，选择已创建的 Category。
+
+```
+Admin 操作:
+  1. 创建 Menu 条目: title="Products", display_mode=dropdown, parent=空
+  2. 创建子条目: title="Treadmills", link_type=category, category=选 "Treadmills", parent=↑
+  3. 创建子条目: title="Exercise Bikes", link_type=category, category=选 "Exercise Bikes", parent=↑
+  4. 创建子条目: title="Home Gyms", link_type=category, category=选 "Home Gyms", parent=↑
+
+API 返回:
+  Products (dropdown)
+    ├── Treadmills    → category.slug="treadmills"     → URL: /products/treadmills
+    ├── Exercise Bikes → category.slug="exercise-bikes" → URL: /products/exercise-bikes
+    └── Home Gyms     → category.slug="home-gyms"      → URL: /products/home-gyms
+
+Astro 可选增强: 每个 link_type=category 的子条目，若其 category 本身有 children（子分类），
+自动展开为三级菜单。
+```
+
+### 场景 2：About Us 菜单（关联页面或自定义链接）
+
+> 管理员创建 dropdown 父条目 "About Us"，然后逐个添加子条目——可选择已有 Page，也可填自定义 URL。
+
+```
+Admin 操作:
+  1. 创建 Menu 条目: title="About Us", display_mode=dropdown, parent=空
+  2. 创建子条目: title="Company", link_type=page, page=选 "about-fitgear", parent=↑
+  3. 创建子条目: title="Quality Control", link_type=page, page=选 "quality-control", parent=↑
+  4. 创建子条目: title="Our Factory", link_type=custom, url="/pages/factory-tour", parent=↑
+
+API 返回:
+  About Us (dropdown)
+    ├── Company          → page.slug="about-fitgear"    → URL: /about-fitgear
+    ├── Quality Control  → page.slug="quality-control"  → URL: /quality-control
+    └── Our Factory      → url="/pages/factory-tour"    → URL: /pages/factory-tour
+```
+
+### 场景 3：混合一级菜单
+
+> 顶层同时有 page、category、custom 三种类型，可自由排序。
+
+```
+Admin 创建（按 order 排序）:
+  order=0: title="Home",      link_type=page,     page=选首页           display_mode=inline
+  order=1: title="Products",  link_type=custom,   url="/products"        display_mode=dropdown  (children 见场景1)
+  order=2: title="About Us",  link_type=custom,   url=null               display_mode=dropdown  (children 见场景2)
+  order=3: title="Blog",      link_type=custom,   url="/blog"            display_mode=inline
+  order=4: title="Contact",   link_type=page,     page=选 "contact-us"   display_mode=inline
+
+API 返回: 5 个顶层条目，按 order 排序，各有 children
 ```
 
 **URL 生成规则**（Astro 端）：
 
-| link_type | URL | 来源 |
-|-----------|-----|------|
-| `category` | `/products/<slug>` | 通过 `category_documentId` 查 Category API 获取 slug |
-| `page` | `/<slug>` | 通过 `page_documentId` 查 Page API 获取 slug（空串 = 首页 `/`） |
-| `custom` | 直接用 `url` | `items[].url` |
+| link_type | 取值来源 | 生成 URL |
+|-----------|---------|----------|
+| `category` | `category.slug` | `/products/<slug>` |
+| `page` | `page.slug` | `/<slug>`（空字符串 → `/`） |
+| `custom` | `url` | 直接使用 |
 
-**响应示例** (`locale=en`)：
+**Astro 使用方式**：
+
+- 按 `site.documentId` 过滤 + `sort=order:asc` 拉取所有 Menu 条目
+- 构建菜单树：找 `parent=null` 的顶层条目 → 遍历 `children.data` 递归
+- Category 自动展开：`link_type=category` 且 `children.data` 为空时，可选通过 Category API 的 `children` 自动生成子菜单
+- `display_mode=dropdown/mega` 且有 children → 下拉/大型菜单
+- `display_mode=inline` → 普通 `<a>` 链接
+- i18n：`title` 字段按 locale 翻译
+
+**响应示例**：
 
 ```json
 {
   "data": [
-    {
-      "id": 1,
-      "documentId": "mnu_abc123",
-      "locale": "en",
-      "site": { "data": { "id": 1, "documentId": "site1", "name": "FitGear Pro" } },
-      "items": [
-        {
-          "title": "Home",
-          "link_type": "page",
-          "page_documentId": "ild3cy82f0nylewt1vrgos8g",
-          "category_documentId": null,
-          "url": null,
-          "open_new_tab": false,
-          "display_mode": "inline",
-          "children": []
-        },
-        {
-          "title": "Products",
-          "link_type": "custom",
-          "page_documentId": null,
-          "category_documentId": null,
-          "url": "/products",
-          "open_new_tab": false,
-          "display_mode": "dropdown",
-          "children": [
-            {
-              "title": "Treadmills",
-              "link_type": "category",
-              "category_documentId": "sfu2fs79m9431hso9xht7zrn",
-              "page_documentId": null,
-              "url": null,
-              "open_new_tab": false,
-              "display_mode": "inline",
-              "children": []
-            },
-            {
-              "title": "Exercise Bikes",
-              "link_type": "category",
-              "category_documentId": "qq0m1usoxl6ooqq6v2a0i2me",
-              "page_documentId": null,
-              "url": null,
-              "open_new_tab": false,
-              "display_mode": "inline",
-              "children": []
-            },
-            {
-              "title": "Home Gyms",
-              "link_type": "category",
-              "category_documentId": "r3si7qmku7zin81rifcogyrh",
-              "page_documentId": null,
-              "url": null,
-              "open_new_tab": false,
-              "display_mode": "inline",
-              "children": []
-            }
-          ]
-        },
-        {
-          "title": "About Us",
-          "link_type": "custom",
-          "page_documentId": null,
-          "category_documentId": null,
-          "url": null,
-          "open_new_tab": false,
-          "display_mode": "dropdown",
-          "children": [
-            {
-              "title": "Company",
-              "link_type": "page",
-              "page_documentId": "ild3cy82f0nylewt1vrgos8g",
-              "category_documentId": null,
-              "url": null,
-              "open_new_tab": false,
-              "display_mode": "inline",
-              "children": []
-            },
-            {
-              "title": "Quality Control",
-              "link_type": "page",
-              "page_documentId": "d6oufuft1m89se9tsupcjoxd",
-              "category_documentId": null,
-              "url": null,
-              "open_new_tab": false,
-              "display_mode": "inline",
-              "children": []
-            },
-            {
-              "title": "OEM/ODM Services",
-              "link_type": "page",
-              "page_documentId": "ueqpwo1w71g4tyyfpzrh6hzc",
-              "category_documentId": null,
-              "url": null,
-              "open_new_tab": false,
-              "display_mode": "inline",
-              "children": []
-            }
-          ]
-        },
-        {
-          "title": "Blog",
-          "link_type": "custom",
-          "page_documentId": null,
-          "category_documentId": null,
-          "url": "/blog",
-          "open_new_tab": false,
-          "display_mode": "inline",
-          "children": []
-        },
-        {
-          "title": "Get Quote",
-          "link_type": "custom",
-          "page_documentId": null,
-          "category_documentId": null,
-          "url": "/pages/contact-us",
-          "open_new_tab": false,
-          "display_mode": "inline",
-          "children": []
-        }
-      ]
+    { "id": 1, "documentId": "m1", "title": "Home", "link_type": "page",
+      "page": { "data": { "slug": "" } }, "category": null, "url": null,
+      "order": 0, "display_mode": "inline", "parent": { "data": null }, "children": { "data": [] } },
+    { "id": 2, "documentId": "m2", "title": "Products", "link_type": "custom",
+      "page": null, "category": null, "url": "/products",
+      "order": 1, "display_mode": "dropdown", "parent": { "data": null },
+      "children": { "data": [
+        { "id": 3, "documentId": "m3", "title": "Treadmills", "link_type": "category",
+          "category": { "data": { "slug": "treadmills" } }, "page": null, "url": null,
+          "order": 0, "display_mode": "inline",
+          "parent": { "data": { "documentId": "m2" } }, "children": { "data": [] } }
+      ]}
     }
   ],
-  "meta": { "pagination": { "page": 1, "pageSize": 25, "pageCount": 1, "total": 1 } }
+  "meta": { "pagination": { "total": 7 } }
 }
 ```
 
-**Astro 使用方式**：
-
-- 按 `site.documentId` 过滤，每个站点返回 **1 条** 记录
-- 直接遍历 `items` 数组渲染导航，按数组顺序输出
-- `children` 非空且 `display_mode=dropdown` → 渲染为下拉菜单
-- `children` 非空且 `display_mode=mega` → 渲染为大型多列菜单
-- 为 `category`/`page` 类型的项获取 slug（通过 documentId 查已有缓存数据）
-- i18n：每个 locale 返回独立翻译的 `items`，`title` 已翻译
-
-**Category 自动展开**（可选增强）：
-- 当 `link_type=category` 且 `children=[]` 时，Astro 可查询 Category API 的 `children` 自动生成子菜单项
-
 **Webhook**: `afterUpdate` lifecycle → `logBuildWebhook(strapi, 'api::menu.menu', documentId)`。
-
-**Admin 填写范例**（B2B 营销网站）：
-
-```json
-[
-  { "title": "Home", "link_type": "page", "page_documentId": "xxx", "display_mode": "inline", "children": [] },
-  { "title": "Products", "link_type": "custom", "url": "/products", "display_mode": "dropdown",
-    "children": [
-      { "title": "Treadmills", "link_type": "category", "category_documentId": "yyy", "display_mode": "inline", "children": [] },
-      { "title": "Exercise Bikes", "link_type": "category", "category_documentId": "zzz", "display_mode": "inline", "children": [] }
-    ]
-  },
-  { "title": "About Us", "link_type": "custom", "url": null, "display_mode": "dropdown",
-    "children": [
-      { "title": "Company", "link_type": "page", "page_documentId": "aaa", "display_mode": "inline", "children": [] },
-      { "title": "QC", "link_type": "page", "page_documentId": "bbb", "display_mode": "inline", "children": [] }
-    ]
-  },
-  { "title": "Blog", "link_type": "custom", "url": "/blog", "display_mode": "inline", "children": [] },
-  { "title": "Contact", "link_type": "page", "page_documentId": "ccc", "display_mode": "inline", "children": [] }
-]
-```
 
 ---
 
@@ -1363,7 +1277,7 @@ GET /api/categories?sort=name:asc
 | Product | name, description, images, videos, seo_* | slug, sku, model_no, price, currency, moq, status, category |
 | Blog | title, content, featured_image, seo_* | slug, status, site |
 | News | title, content, featured_image, seo_* | slug, status, site |
-| Menu | items (整个 JSON 树 localized) | site |
+| Menu | title | link_type, category, page, url, order, open_new_tab, display_mode, site, parent |
 | Footer | description, columns, bottom_text, bottom_links | site, logo, social_links |
 | Site | （不适用，无 i18n） | 所有字段 |
 

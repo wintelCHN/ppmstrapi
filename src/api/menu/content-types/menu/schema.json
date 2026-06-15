@@ -6,7 +6,7 @@
     "pluralName": "menus",
     "displayName": "Menu",
     "name": "menu",
-    "description": "Per-site navigation menu with recursive tree (one-to-one with Site)"
+    "description": "Site navigation menu with recursive nesting, references Categories or Pages"
   },
   "options": {
     "draftAndPublish": true
@@ -17,20 +17,87 @@
     }
   },
   "attributes": {
-    "site": {
-      "type": "relation",
-      "relation": "oneToOne",
-      "target": "api::site.site",
-      "inversedBy": "menu"
-    },
-    "items": {
-      "type": "json",
-      "required": true,
+    "title": {
+      "type": "string",
       "pluginOptions": {
         "i18n": {
           "localized": true
         }
       }
+    },
+    "link_type": {
+      "type": "enumeration",
+      "enum": ["category", "page", "custom"],
+      "default": "custom",
+      "pluginOptions": {
+        "i18n": {
+          "localized": false
+        }
+      }
+    },
+    "category": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::category.category"
+    },
+    "page": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::page.page"
+    },
+    "url": {
+      "type": "string",
+      "pluginOptions": {
+        "i18n": {
+          "localized": false
+        }
+      }
+    },
+    "order": {
+      "type": "integer",
+      "default": 0,
+      "pluginOptions": {
+        "i18n": {
+          "localized": false
+        }
+      }
+    },
+    "open_new_tab": {
+      "type": "boolean",
+      "default": false,
+      "pluginOptions": {
+        "i18n": {
+          "localized": false
+        }
+      }
+    },
+    "display_mode": {
+      "type": "enumeration",
+      "enum": ["inline", "dropdown", "mega"],
+      "default": "inline",
+      "pluginOptions": {
+        "i18n": {
+          "localized": false
+        }
+      }
+    },
+    "site": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::site.site",
+      "inversedBy": "menus"
+    },
+    "parent": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::menu.menu",
+      "inversedBy": "children"
+    },
+    "children": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::menu.menu",
+      "mappedBy": "parent"
     }
   }
 }
