@@ -73,6 +73,18 @@
       "relation": "oneToMany",
       "target": "api::category.category",
       "mappedBy": "site"
+    },
+    "blogs": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::blog.blog",
+      "mappedBy": "site"
+    },
+    "news_articles": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::news.news",
+      "mappedBy": "site"
     }
   }
 }
