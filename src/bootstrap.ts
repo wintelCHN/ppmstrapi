@@ -21,6 +21,7 @@ const PUBLIC_READ_CONTENT_TYPES: PermissionConfig[] = [
   { uid: 'api::blog.blog', actions: ['find', 'findOne'] },
   { uid: 'api::news.news', actions: ['find', 'findOne'] },
   { uid: 'api::menu.menu', actions: ['find', 'findOne'] },
+  { uid: 'api::menu-item.menu-item', actions: ['find', 'findOne'] },
   { uid: 'api::footer.footer', actions: ['find', 'findOne'] },
 ]
 

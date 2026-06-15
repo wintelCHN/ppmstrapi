@@ -758,14 +758,14 @@ export interface ApiLeadFormSubmissionLeadFormSubmission
   };
 }
 
-export interface ApiMenuMenu extends Struct.CollectionTypeSchema {
-  collectionName: 'menus';
+export interface ApiMenuItemMenuItem extends Struct.CollectionTypeSchema {
+  collectionName: 'menu_items';
   info: {
-    description: 'Site navigation menu with recursive nesting, references Categories or Pages';
-    displayName: 'Menu';
-    name: 'menu';
-    pluralName: 'menus';
-    singularName: 'menu';
+    description: 'Individual navigation item within a site Menu. References Category, Page, or custom URL.';
+    displayName: 'Menu Item';
+    name: 'menu-item';
+    pluralName: 'menu-items';
+    singularName: 'menu-item';
   };
   options: {
     draftAndPublish: true;
@@ -777,11 +777,10 @@ export interface ApiMenuMenu extends Struct.CollectionTypeSchema {
   };
   attributes: {
     category: Schema.Attribute.Relation<'manyToOne', 'api::category.category'>;
-    children: Schema.Attribute.Relation<'oneToMany', 'api::menu.menu'>;
     createdAt: Schema.Attribute.DateTime;
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
-    display_mode: Schema.Attribute.Enumeration<['inline', 'dropdown', 'mega']> &
+    display_mode: Schema.Attribute.Enumeration<['inline', 'dropdown']> &
       Schema.Attribute.SetPluginOptions<{
         i18n: {
           localized: false;
@@ -796,7 +795,11 @@ export interface ApiMenuMenu extends Struct.CollectionTypeSchema {
       }> &
       Schema.Attribute.DefaultTo<'custom'>;
     locale: Schema.Attribute.String;
-    localizations: Schema.Attribute.Relation<'oneToMany', 'api::menu.menu'>;
+    localizations: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::menu-item.menu-item'
+    >;
+    menu: Schema.Attribute.Relation<'manyToOne', 'api::menu.menu'>;
     open_new_tab: Schema.Attribute.Boolean &
       Schema.Attribute.SetPluginOptions<{
         i18n: {
@@ -812,9 +815,7 @@ export interface ApiMenuMenu extends Struct.CollectionTypeSchema {
       }> &
       Schema.Attribute.DefaultTo<0>;
     page: Schema.Attribute.Relation<'manyToOne', 'api::page.page'>;
-    parent: Schema.Attribute.Relation<'manyToOne', 'api::menu.menu'>;
     publishedAt: Schema.Attribute.DateTime;
-    site: Schema.Attribute.Relation<'manyToOne', 'api::site.site'>;
     title: Schema.Attribute.String &
       Schema.Attribute.SetPluginOptions<{
         i18n: {
@@ -830,6 +831,44 @@ export interface ApiMenuMenu extends Struct.CollectionTypeSchema {
           localized: false;
         };
       }>;
+  };
+}
+
+export interface ApiMenuMenu extends Struct.CollectionTypeSchema {
+  collectionName: 'menus';
+  info: {
+    description: 'Per-site navigation menu container (one-to-one with Site). Items are managed via Menu Item collection.';
+    displayName: 'Menu';
+    name: 'menu';
+    pluralName: 'menus';
+    singularName: 'menu';
+  };
+  options: {
+    draftAndPublish: true;
+  };
+  pluginOptions: {
+    i18n: {
+      localized: true;
+    };
+  };
+  attributes: {
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    items: Schema.Attribute.Relation<'oneToMany', 'api::menu-item.menu-item'>;
+    locale: Schema.Attribute.String;
+    localizations: Schema.Attribute.Relation<'oneToMany', 'api::menu.menu'>;
+    publishedAt: Schema.Attribute.DateTime;
+    site: Schema.Attribute.Relation<'oneToOne', 'api::site.site'>;
+    title: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
   };
 }
 
@@ -1144,7 +1183,7 @@ export interface ApiSiteSite extends Struct.CollectionTypeSchema {
     locale: Schema.Attribute.String & Schema.Attribute.Private;
     localizations: Schema.Attribute.Relation<'oneToMany', 'api::site.site'> &
       Schema.Attribute.Private;
-    menus: Schema.Attribute.Relation<'oneToMany', 'api::menu.menu'>;
+    menu: Schema.Attribute.Relation<'oneToOne', 'api::menu.menu'>;
     name: Schema.Attribute.String & Schema.Attribute.Required;
     news_articles: Schema.Attribute.Relation<'oneToMany', 'api::news.news'>;
     notes: Schema.Attribute.Blocks;
@@ -1681,6 +1720,7 @@ declare module '@strapi/strapi' {
       'api::footer.footer': ApiFooterFooter;
       'api::global.global': ApiGlobalGlobal;
       'api::lead-form-submission.lead-form-submission': ApiLeadFormSubmissionLeadFormSubmission;
+      'api::menu-item.menu-item': ApiMenuItemMenuItem;
       'api::menu.menu': ApiMenuMenu;
       'api::news.news': ApiNewsNews;
       'api::page.page': ApiPagePage;

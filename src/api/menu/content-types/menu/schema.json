@@ -6,7 +6,7 @@
     "pluralName": "menus",
     "displayName": "Menu",
     "name": "menu",
-    "description": "Site navigation menu with recursive nesting, references Categories or Pages"
+    "description": "Per-site navigation menu container (one-to-one with Site). Items are managed via Menu Item collection."
   },
   "options": {
     "draftAndPublish": true
@@ -25,79 +25,17 @@
         }
       }
     },
-    "link_type": {
-      "type": "enumeration",
-      "enum": ["category", "page", "custom"],
-      "default": "custom",
-      "pluginOptions": {
-        "i18n": {
-          "localized": false
-        }
-      }
-    },
-    "category": {
-      "type": "relation",
-      "relation": "manyToOne",
-      "target": "api::category.category"
-    },
-    "page": {
-      "type": "relation",
-      "relation": "manyToOne",
-      "target": "api::page.page"
-    },
-    "url": {
-      "type": "string",
-      "pluginOptions": {
-        "i18n": {
-          "localized": false
-        }
-      }
-    },
-    "order": {
-      "type": "integer",
-      "default": 0,
-      "pluginOptions": {
-        "i18n": {
-          "localized": false
-        }
-      }
-    },
-    "open_new_tab": {
-      "type": "boolean",
-      "default": false,
-      "pluginOptions": {
-        "i18n": {
-          "localized": false
-        }
-      }
-    },
-    "display_mode": {
-      "type": "enumeration",
-      "enum": ["inline", "dropdown", "mega"],
-      "default": "inline",
-      "pluginOptions": {
-        "i18n": {
-          "localized": false
-        }
-      }
-    },
     "site": {
       "type": "relation",
-      "relation": "manyToOne",
+      "relation": "oneToOne",
       "target": "api::site.site",
-      "inversedBy": "menus"
+      "inversedBy": "menu"
     },
-    "parent": {
-      "type": "relation",
-      "relation": "manyToOne",
-      "target": "api::menu.menu",
-      "inversedBy": "children"
-    },
-    "children": {
+    "items": {
       "type": "relation",
       "relation": "oneToMany",
-      "target": "api::menu.menu",
-      "mappedBy": "parent"
+      "target": "api::menu-item.menu-item",
+      "mappedBy": "menu"
     }
   }
 }
