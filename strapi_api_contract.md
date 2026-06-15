@@ -1,6 +1,6 @@
 # Strapi API Contract — Astro 前端数据对接规范
 
-> **版本**: 1.2 | **更新**: 2026-06-15 | **Strapi 版本**: 5.47.1 CE
+> **版本**: 1.3 | **更新**: 2026-06-15 | **Strapi 版本**: 5.47.1 CE
 
 ---
 
@@ -19,6 +19,7 @@
    - [4.7 News (新闻)](#47-news-新闻)
    - [4.8 Menu (导航菜单)](#48-menu-导航菜单)
    - [4.9 Footer (页脚)](#49-footer-页脚)
+   - [4.10 Lead (询盘中心)](#410-lead-询盘中心)
 5. [Dynamic Zone Section 类型](#5-dynamic-zone-section-类型)
 6. [组件规范](#6-组件规范)
 7. [媒体对象](#7-媒体对象)
@@ -1093,6 +1094,237 @@ function logoUrl(footer: FooterData): string | null {
 - `social_links` → 社交媒体图标行（可选置于 columns 上方或最底部）
 
 **Webhook**: `afterUpdate` lifecycle → `logBuildWebhook(strapi, 'api::footer.footer', documentId)`。
+
+---
+
+### 4.10 Lead (询盘中心)
+
+Lead 是集中式询盘管理系统。所有 Astro 网站通过公开 API 提交询盘，Strapi Admin 统一管理。
+
+> **安全说明**: Lead 数据不可公开读取。提交使用自定义公开端点（无需认证），查询/导出仅限 Admin。
+
+#### 4.10.1 公开提交端点
+
+```http
+POST /api/public/lead
+Content-Type: application/json
+```
+
+无需认证。所有 Astro 网站直接提交。
+
+**请求体** (JSON):
+
+```typescript
+interface LeadSubmission {
+  // 必填
+  name: string              // 姓名, ≥2 字符
+  email: string             // 邮箱, 合法格式
+  message: string           // 询盘内容, ≥10 字符
+  site_id: string           // 来源站点 slug (如 "proneofit")
+  site_domain: string       // 来源域名 (如 "proneofit.com")
+
+  // 可选 — 基本信息
+  phone?: string
+  whatsapp?: string
+  company?: string
+  country?: string
+
+  // 可选 — 询盘信息
+  product_interest?: string // 感兴趣的产品
+  quantity?: string         // 数量
+
+  // 可选 — 页面归因 (Astro 自动注入)
+  page_url?: string         // 提交页面路径
+  page_title?: string       // 页面标题
+
+  // 可选 — 营销归因 (UTM)
+  utm_source?: string
+  utm_medium?: string
+  utm_campaign?: string
+  utm_term?: string
+  utm_content?: string
+
+  // Honeypot (机器人陷阱)
+  website?: string          // 隐藏字段, 非空 = spam
+}
+```
+
+**响应**:
+
+```typescript
+// 成功 (200)
+{ success: true, message: "Lead submitted successfully." }
+
+// 验证失败 (400)
+{ success: false, message: "Name is required (minimum 2 characters)." }
+{ success: false, message: "Invalid email address." }
+{ success: false, message: "Message is required (minimum 10 characters)." }
+
+// 限流 (429)
+{ success: false, message: "Too many requests. Please try again later." }
+
+// 服务器错误 (500)
+{ success: false, message: "Internal server error." }
+```
+
+#### 4.10.2 安全机制
+
+| 机制 | 说明 |
+|------|------|
+| **Honeypot** | `website` 字段通过 CSS 隐藏，机器人自动填充。命中后返回 200 假成功，实际不存库 |
+| **限流** | 同 IP 5 次 / 10 分钟，超出 429 |
+| **自动捕获** | `ip_address` + `user_agent` 从请求自动注入 |
+| **隐私** | `internal_notes` 字段 private，不暴露给公开 API |
+
+#### 4.10.3 Lead 完整字段
+
+```typescript
+interface Lead {
+  documentId: string
+  // 基本信息
+  name: string              // required
+  email: string             // required
+  phone: string | null
+  whatsapp: string | null
+  company: string | null
+  country: string | null
+  // 询盘信息
+  message: string           // required
+  product_interest: string | null
+  quantity: string | null
+  // 归因
+  site_id: string           // required
+  site_domain: string       // required
+  page_url: string          // required
+  page_title: string | null
+  // 营销归因
+  utm_source: string | null
+  utm_medium: string | null
+  utm_campaign: string | null
+  utm_term: string | null
+  utm_content: string | null
+  // 技术
+  ip_address: string | null
+  user_agent: string | null
+  // 管理
+  status: 'new' | 'contacted' | 'qualified' | 'closed_won' | 'closed_lost' | 'spam'
+  internal_notes: string | null  // Admin only (private)
+  // 时间
+  createdAt: string
+  updatedAt: string
+}
+```
+
+#### 4.10.4 Astro 调用代码
+
+**方式 1: 使用 LeadForm.astro 组件**
+
+```astro
+---
+import LeadForm from '../components/LeadForm.astro'
+---
+<LeadForm
+  type="quick"              <!-- quick | rfq | contact -->
+  siteId="proneofit"
+  siteDomain="proneofit.com"
+  product="Commercial Treadmill"  <!-- pre-fill product (rfq mode) -->
+/>
+```
+
+**方式 2: 手动 fetch**
+
+```typescript
+// src/lib/lead.ts
+const STRAPI_URL = import.meta.env.STRAPI_URL ?? "http://localhost:1339"
+
+interface LeadPayload {
+  name: string
+  email: string
+  message: string
+  site_id: string
+  site_domain: string
+  phone?: string
+  company?: string
+  country?: string
+  product_interest?: string
+  quantity?: string
+  // Auto-injected below
+  page_url?: string
+  page_title?: string
+  [key: string]: string | undefined
+}
+
+export async function submitLead(payload: LeadPayload): Promise<{ success: boolean; message: string }> {
+  const body: LeadPayload = {
+    ...payload,
+    page_url: window.location.pathname,
+    page_title: document.title,
+    // Capture UTM from sessionStorage (set by LeadForm or manual)
+    utm_source: sessionStorage.getItem('utm_source') ?? undefined,
+    utm_medium: sessionStorage.getItem('utm_medium') ?? undefined,
+    utm_campaign: sessionStorage.getItem('utm_campaign') ?? undefined,
+  }
+
+  const resp = await fetch(`${STRAPI_URL}/api/public/lead`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  })
+
+  return resp.json()
+}
+```
+
+**表单 HTML 要求**:
+
+```html
+<form action="http://localhost:1339/api/public/lead" method="POST">
+  <!-- ⚠️ 必须包含 honeypot 字段 -->
+  <input name="website" style="display:none" tabindex="-1" autocomplete="off" />
+
+  <!-- 隐藏归因字段（JS 自动填充） -->
+  <input type="hidden" name="site_id" value="proneofit" />
+  <input type="hidden" name="site_domain" value="proneofit.com" />
+  <input type="hidden" name="page_url" id="lead-page-url" />
+  <input type="hidden" name="page_title" id="lead-page-title" />
+
+  <!-- 用户可见字段 -->
+  <input name="name" required minlength="2" />
+  <input name="email" type="email" required />
+  <textarea name="message" required minlength="10"></textarea>
+
+  <button type="submit">Submit</button>
+</form>
+```
+
+#### 4.10.5 Admin 管理
+
+| 功能 | 说明 |
+|------|------|
+| **列表** | 默认列: createdAt, name, email, company, country, site_id, status |
+| **搜索** | 按 name / email / company 搜索 |
+| **筛选** | 按 status / site_id / createdAt 日期范围筛选 |
+| **编辑** | Admin 可更新 status + internal_notes |
+| **CSV 导出** | `GET /api/leads/export` → 下载 CSV（Admin 认证） |
+
+#### 4.10.6 邮件通知
+
+配置 `.env` 后自动发送:
+
+```bash
+SMTP_HOST=smtp.example.com
+SMTP_PORT=587
+SMTP_SECURE=false
+SMTP_USER=user@example.com
+SMTP_PASS=yourpassword
+EMAIL_FROM=noreply@b2bcms.com
+EMAIL_REPLY_TO=noreply@b2bcms.com
+LEAD_NOTIFY_EMAIL=sales@example.com
+```
+
+邮件内容: Name, Email, Phone, Company, Country, Product, Quantity, Message, Site, Page URL, Created Time。
+
+发送为异步 fire-and-forget，不阻塞询盘创建。SMTP 未配置时仅跳过通知（不影响询盘入库）。
 
 ---
 

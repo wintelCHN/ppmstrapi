@@ -1,0 +1,92 @@
+{
+  "kind": "collectionType",
+  "collectionName": "leads",
+  "info": {
+    "singularName": "lead",
+    "pluralName": "leads",
+    "displayName": "Lead",
+    "description": "Centralized B2B lead/inquiry management"
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "attributes": {
+    "name": {
+      "type": "string",
+      "required": true,
+      "minLength": 2
+    },
+    "email": {
+      "type": "string",
+      "required": true
+    },
+    "phone": {
+      "type": "string"
+    },
+    "whatsapp": {
+      "type": "string"
+    },
+    "company": {
+      "type": "string"
+    },
+    "country": {
+      "type": "string"
+    },
+    "message": {
+      "type": "text",
+      "required": true,
+      "minLength": 10
+    },
+    "product_interest": {
+      "type": "string"
+    },
+    "quantity": {
+      "type": "string"
+    },
+    "site_id": {
+      "type": "string",
+      "required": true
+    },
+    "site_domain": {
+      "type": "string",
+      "required": true
+    },
+    "page_url": {
+      "type": "string",
+      "required": true
+    },
+    "page_title": {
+      "type": "string"
+    },
+    "utm_source": {
+      "type": "string"
+    },
+    "utm_medium": {
+      "type": "string"
+    },
+    "utm_campaign": {
+      "type": "string"
+    },
+    "utm_term": {
+      "type": "string"
+    },
+    "utm_content": {
+      "type": "string"
+    },
+    "ip_address": {
+      "type": "string"
+    },
+    "user_agent": {
+      "type": "text"
+    },
+    "status": {
+      "type": "enumeration",
+      "enum": ["new", "contacted", "qualified", "closed_won", "closed_lost", "spam"],
+      "default": "new"
+    },
+    "internal_notes": {
+      "type": "text",
+      "private": true
+    }
+  }
+}

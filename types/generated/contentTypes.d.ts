@@ -726,35 +726,61 @@ export interface ApiGlobalGlobal extends Struct.SingleTypeSchema {
   };
 }
 
-export interface ApiLeadFormSubmissionLeadFormSubmission
-  extends Struct.CollectionTypeSchema {
-  collectionName: 'lead_form_submissions';
+export interface ApiLeadLead extends Struct.CollectionTypeSchema {
+  collectionName: 'leads';
   info: {
-    displayName: 'Lead form submission';
-    name: 'lead-form-submission';
-    pluralName: 'lead-form-submissions';
-    singularName: 'lead-form-submission';
+    description: 'Centralized B2B lead/inquiry management';
+    displayName: 'Lead';
+    pluralName: 'leads';
+    singularName: 'lead';
   };
   options: {
     draftAndPublish: false;
   };
   attributes: {
+    company: Schema.Attribute.String;
+    country: Schema.Attribute.String;
     createdAt: Schema.Attribute.DateTime;
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
-    email: Schema.Attribute.String;
+    email: Schema.Attribute.String & Schema.Attribute.Required;
+    internal_notes: Schema.Attribute.Text & Schema.Attribute.Private;
+    ip_address: Schema.Attribute.String;
     locale: Schema.Attribute.String & Schema.Attribute.Private;
-    localizations: Schema.Attribute.Relation<
-      'oneToMany',
-      'api::lead-form-submission.lead-form-submission'
-    > &
+    localizations: Schema.Attribute.Relation<'oneToMany', 'api::lead.lead'> &
       Schema.Attribute.Private;
-    location: Schema.Attribute.String;
+    message: Schema.Attribute.Text &
+      Schema.Attribute.Required &
+      Schema.Attribute.SetMinMaxLength<{
+        minLength: 10;
+      }>;
+    name: Schema.Attribute.String &
+      Schema.Attribute.Required &
+      Schema.Attribute.SetMinMaxLength<{
+        minLength: 2;
+      }>;
+    page_title: Schema.Attribute.String;
+    page_url: Schema.Attribute.String & Schema.Attribute.Required;
+    phone: Schema.Attribute.String;
+    product_interest: Schema.Attribute.String;
     publishedAt: Schema.Attribute.DateTime;
-    status: Schema.Attribute.Enumeration<['seen', 'contacted', 'ignored']>;
+    quantity: Schema.Attribute.String;
+    site_domain: Schema.Attribute.String & Schema.Attribute.Required;
+    site_id: Schema.Attribute.String & Schema.Attribute.Required;
+    status: Schema.Attribute.Enumeration<
+      ['new', 'contacted', 'qualified', 'closed_won', 'closed_lost', 'spam']
+    > &
+      Schema.Attribute.DefaultTo<'new'>;
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
+    user_agent: Schema.Attribute.Text;
+    utm_campaign: Schema.Attribute.String;
+    utm_content: Schema.Attribute.String;
+    utm_medium: Schema.Attribute.String;
+    utm_source: Schema.Attribute.String;
+    utm_term: Schema.Attribute.String;
+    whatsapp: Schema.Attribute.String;
   };
 }
 
@@ -1719,7 +1745,7 @@ declare module '@strapi/strapi' {
       'api::category.category': ApiCategoryCategory;
       'api::footer.footer': ApiFooterFooter;
       'api::global.global': ApiGlobalGlobal;
-      'api::lead-form-submission.lead-form-submission': ApiLeadFormSubmissionLeadFormSubmission;
+      'api::lead.lead': ApiLeadLead;
       'api::menu-item.menu-item': ApiMenuItemMenuItem;
       'api::menu.menu': ApiMenuMenu;
       'api::news.news': ApiNewsNews;
