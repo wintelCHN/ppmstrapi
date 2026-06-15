@@ -83,6 +83,7 @@ GET /api/pages?filters[$and][0][publishedAt][$notNull]=true&locale=en
 GET /api/blogs?filters[$and][0][publishedAt][$notNull]=true&locale=en
 GET /api/news-articles?filters[$and][0][publishedAt][$notNull]=true&locale=en
 GET /api/menus?filters[$and][0][publishedAt][$notNull]=true&locale=en
+GET /api/menu-items?filters[$and][0][publishedAt][$notNull]=true&locale=en
 GET /api/footers?filters[$and][0][publishedAt][$notNull]=true&locale=en
 ```
 
@@ -459,7 +460,7 @@ Product → category → site
 | `blogs` | relation oneToMany → Blog | — | 反向关系，该站点下的所有博客文章 |
 | `news_articles` | relation oneToMany → News | — | 反向关系，该站点下的所有新闻 |
 | `pages` | relation oneToMany → Page | — | 反向关系，该站点下的所有自定义页面 |
-| `menus` | relation oneToMany → Menu | — | 该站点的所有导航菜单项（通过 parent/children 组装树） |
+| `menu` | relation oneToOne → Menu | — | 该站点的导航菜单容器（一对一），通过 `items` 获取所有导航项 |
 | `footer` | relation oneToOne → Footer | — | 该站点的页脚配置（一对一，含 columns/bottom_links） |
 
 **注意**：`blogs` 和 `news_articles` 的 API 响应中字段名与 relation 名一致（即 `blogs` 和 `news_articles`），不是 `blog`/`news`。
@@ -491,8 +492,8 @@ Product → category → site
   "pages": {
     "data": []
   },
-  "menus": {
-    "data": []
+  "menu": {
+    "data": null
   },
   "footer": {
     "data": null
@@ -651,127 +652,245 @@ Product → category → site
 
 ---
 
-### 4.8 Menu (导航菜单)
+### 4.8 Navigation（Menu 容器 + Menu Item 导航项）
 
-**端点**: `GET /api/menus?locale=<lang>&populate[category][fields][0]=slug&populate[page][fields][0]=slug&populate[parent]=*&populate[children][populate][category][fields][0]=slug&populate[children][populate][page][fields][0]=slug&filters[site][documentId][$eq]=<site_documentId>&filters[publishedAt][$notNull]=true&sort=order:asc`
-
-**类型**: Collection Type，每个条目是一个菜单项，通过 `parent`/`children` 递归嵌套
-
-**draftAndPublish**: `true`
-
-**i18n**: 已启用
-
-| 字段 | 类型 | i18n | 必填 | 说明 |
-|------|------|------|------|------|
-| `title` | string | localized | 否 | 显示文本（为空时取关联内容标题） |
-| `link_type` | enum: category/page/custom | **不** | — | 默认 `custom` |
-| `category` | relation manyToOne → Category | — | 否 | link_type=category 时选择 |
-| `page` | relation manyToOne → Page | — | 否 | link_type=page 时选择 |
-| `url` | string | **不** | 否 | link_type=custom 时填写 |
-| `order` | integer | **不** | 否 | 同级排序，默认 0 |
-| `open_new_tab` | boolean | **不** | 否 | 默认 false |
-| `display_mode` | enum: inline/dropdown/mega | **不** | 否 | 默认 `inline` |
-| `site` | relation manyToOne → Site | — | 否 | 所属站点 |
-| `parent` | relation manyToOne → Menu (self) | — | 否 | 父级菜单项 |
-| `children` | relation oneToMany → Menu (self) | — | — | 子菜单项（反向） |
-
-**三个核心场景**：
-
-### 场景 1：Products 菜单（关联产品分类）
-
-> 管理员创建一个 `display_mode=dropdown` 的顶层条目 "Products"，然后在 children 中逐个添加 `link_type=category` 的子条目，选择已创建的 Category。
+**架构**:
 
 ```
-Admin 操作:
-  1. 创建 Menu 条目: title="Products", display_mode=dropdown, parent=空
-  2. 创建子条目: title="Treadmills", link_type=category, category=选 "Treadmills", parent=↑
-  3. 创建子条目: title="Exercise Bikes", link_type=category, category=选 "Exercise Bikes", parent=↑
-  4. 创建子条目: title="Home Gyms", link_type=category, category=选 "Home Gyms", parent=↑
-
-API 返回:
-  Products (dropdown)
-    ├── Treadmills    → category.slug="treadmills"     → URL: /products/treadmills
-    ├── Exercise Bikes → category.slug="exercise-bikes" → URL: /products/exercise-bikes
-    └── Home Gyms     → category.slug="home-gyms"      → URL: /products/home-gyms
-
-Astro 可选增强: 每个 link_type=category 的子条目，若其 category 本身有 children（子分类），
-自动展开为三级菜单。
+Site (1) ──oneToOne──→ Menu (1) ──oneToMany──→ MenuItem (N)
 ```
 
-### 场景 2：About Us 菜单（关联页面或自定义链接）
+Menu 是菜单容器（与 Site 一对一），MenuItem 是导航项（N 个，按 `order` 字段排序）。每个 MenuItem 通过 `link_type` 决定链接目标：Category（产品分类）、Page（自定义页面）、custom（任意 URL）。
 
-> 管理员创建 dropdown 父条目 "About Us"，然后逐个添加子条目——可选择已有 Page，也可填自定义 URL。
+**嵌套由被引用内容类型解决**：`link_type=category` + `display_mode=dropdown` 时，Astro 调用 Category API 的 `children` 自动展开子分类。
 
-```
-Admin 操作:
-  1. 创建 Menu 条目: title="About Us", display_mode=dropdown, parent=空
-  2. 创建子条目: title="Company", link_type=page, page=选 "about-fitgear", parent=↑
-  3. 创建子条目: title="Quality Control", link_type=page, page=选 "quality-control", parent=↑
-  4. 创建子条目: title="Our Factory", link_type=custom, url="/pages/factory-tour", parent=↑
+---
 
-API 返回:
-  About Us (dropdown)
-    ├── Company          → page.slug="about-fitgear"    → URL: /about-fitgear
-    ├── Quality Control  → page.slug="quality-control"  → URL: /quality-control
-    └── Our Factory      → url="/pages/factory-tour"    → URL: /pages/factory-tour
+#### 4.8.1 推荐：一次查询获取完整导航
+
+```bash
+GET /api/menus?locale={lang}&populate[items][populate][category][fields][0]=slug&populate[items][populate][page][fields][0]=slug&filters[site][documentId][$eq]={siteDocumentId}&filters[publishedAt][$notNull]=true
 ```
 
-### 场景 3：混合一级菜单
+返回 Menu + 所有已发布 MenuItem（含关联 Category/Page 的 slug），一次性获取全部导航数据。
 
-> 顶层同时有 page、category、custom 三种类型，可自由排序。
+#### 4.8.2 Menu (菜单容器) 字段
 
-```
-Admin 创建（按 order 排序）:
-  order=0: title="Home",      link_type=page,     page=选首页           display_mode=inline
-  order=1: title="Products",  link_type=custom,   url="/products"        display_mode=dropdown  (children 见场景1)
-  order=2: title="About Us",  link_type=custom,   url=null               display_mode=dropdown  (children 见场景2)
-  order=3: title="Blog",      link_type=custom,   url="/blog"            display_mode=inline
-  order=4: title="Contact",   link_type=page,     page=选 "contact-us"   display_mode=inline
+| 字段 | 类型 | i18n | 说明 |
+|------|------|------|------|
+| `title` | string | localized | 菜单名称（内部标识，前端不用） |
+| `site` | relation oneToOne → Site | — | 所属站点 |
+| `items` | relation oneToMany → Menu Item | — | 所有导航项（通过 populate 展开） |
 
-API 返回: 5 个顶层条目，按 order 排序，各有 children
-```
+#### 4.8.3 Menu Item (导航项) 字段
 
-**URL 生成规则**（Astro 端）：
+| 字段 | 类型 | i18n | 说明 |
+|------|------|------|------|
+| `title` | string | localized | 导航显示文本 |
+| `link_type` | enum: `category` / `page` / `custom` | 否 | 链接类型，默认 `custom` |
+| `category` | relation manyToOne → Category | — | `link_type=category` 时关联 |
+| `page` | relation manyToOne → Page | — | `link_type=page` 时关联 |
+| `url` | string | 否 | `link_type=custom` 时填写 |
+| `order` | integer (default: 0) | 否 | 排序，升序 |
+| `open_new_tab` | boolean (default: false) | 否 | 新窗口打开 |
+| `display_mode` | enum: `inline` / `dropdown` | 否 | `inline`=普通链接，`dropdown`=下拉菜单 |
+| `menu` | relation manyToOne → Menu | — | 所属菜单容器 |
 
-| link_type | 取值来源 | 生成 URL |
-|-----------|---------|----------|
-| `category` | `category.slug` | `/products/<slug>` |
-| `page` | `page.slug` | `/<slug>`（空字符串 → `/`） |
-| `custom` | `url` | 直接使用 |
+---
 
-**Astro 使用方式**：
+#### 4.8.4 一次查询完整响应示例
 
-- 按 `site.documentId` 过滤 + `sort=order:asc` 拉取所有 Menu 条目
-- 构建菜单树：找 `parent=null` 的顶层条目 → 遍历 `children.data` 递归
-- Category 自动展开：`link_type=category` 且 `children.data` 为空时，可选通过 Category API 的 `children` 自动生成子菜单
-- `display_mode=dropdown/mega` 且有 children → 下拉/大型菜单
-- `display_mode=inline` → 普通 `<a>` 链接
-- i18n：`title` 字段按 locale 翻译
-
-**响应示例**：
+`GET /api/menus?locale=en&populate[items][populate][category][fields][0]=slug&populate[items][populate][page][fields][0]=slug&filters[site][documentId][$eq]=s1&filters[publishedAt][$notNull]=true`
 
 ```json
 {
   "data": [
-    { "id": 1, "documentId": "m1", "title": "Home", "link_type": "page",
-      "page": { "data": { "slug": "" } }, "category": null, "url": null,
-      "order": 0, "display_mode": "inline", "parent": { "data": null }, "children": { "data": [] } },
-    { "id": 2, "documentId": "m2", "title": "Products", "link_type": "custom",
-      "page": null, "category": null, "url": "/products",
-      "order": 1, "display_mode": "dropdown", "parent": { "data": null },
-      "children": { "data": [
-        { "id": 3, "documentId": "m3", "title": "Treadmills", "link_type": "category",
-          "category": { "data": { "slug": "treadmills" } }, "page": null, "url": null,
-          "order": 0, "display_mode": "inline",
-          "parent": { "data": { "documentId": "m2" } }, "children": { "data": [] } }
-      ]}
+    {
+      "id": 1,
+      "documentId": "menu1",
+      "title": "主导航",
+      "site": { "data": { "id": 1, "documentId": "s1", "name": "treadmill" } },
+      "items": {
+        "data": [
+          {
+            "id": 1, "documentId": "mi_home",
+            "title": "Home", "link_type": "page",
+            "page": { "data": { "slug": "" } },
+            "category": null, "url": null,
+            "order": 0, "display_mode": "inline", "open_new_tab": false
+          },
+          {
+            "id": 2, "documentId": "mi_products",
+            "title": "Products", "link_type": "custom",
+            "page": null, "category": null,
+            "url": "/products",
+            "order": 10, "display_mode": "dropdown", "open_new_tab": false
+          },
+          {
+            "id": 3, "documentId": "mi_treadmills",
+            "title": "Treadmills", "link_type": "category",
+            "page": null,
+            "category": { "data": { "slug": "treadmills" } },
+            "url": null,
+            "order": 20, "display_mode": "dropdown", "open_new_tab": false
+          },
+          {
+            "id": 4, "documentId": "mi_bikes",
+            "title": "Exercise Bikes", "link_type": "category",
+            "page": null,
+            "category": { "data": { "slug": "exercise-bikes" } },
+            "url": null,
+            "order": 30, "display_mode": "dropdown", "open_new_tab": false
+          },
+          {
+            "id": 5, "documentId": "mi_about",
+            "title": "About Us", "link_type": "custom",
+            "page": null, "category": null,
+            "url": "/about",
+            "order": 40, "display_mode": "dropdown", "open_new_tab": false
+          },
+          {
+            "id": 6, "documentId": "mi_company",
+            "title": "Company", "link_type": "page",
+            "page": { "data": { "slug": "about-fitgear" } },
+            "category": null, "url": null,
+            "order": 41, "display_mode": "inline", "open_new_tab": false
+          },
+          {
+            "id": 7, "documentId": "mi_blog",
+            "title": "Blog", "link_type": "custom",
+            "page": null, "category": null,
+            "url": "/blog",
+            "order": 50, "display_mode": "inline", "open_new_tab": false
+          },
+          {
+            "id": 8, "documentId": "mi_contact",
+            "title": "Contact", "link_type": "page",
+            "page": { "data": { "slug": "contact-us" } },
+            "category": null, "url": null,
+            "order": 60, "display_mode": "inline", "open_new_tab": false
+          }
+        ]
+      }
     }
   ],
-  "meta": { "pagination": { "total": 7 } }
+  "meta": { "pagination": { "page": 1, "pageSize": 25, "pageCount": 1, "total": 1 } }
 }
 ```
 
-**Webhook**: `afterUpdate` lifecycle → `logBuildWebhook(strapi, 'api::menu.menu', documentId)`。
+#### 4.8.5 Astro 调用代码
+
+```typescript
+// ── 类型定义 ──
+interface MenuResponse {
+  data: Array<{
+    documentId: string
+    title: string
+    items: {
+      data: MenuItemData[]
+    }
+  }>
+  meta: { pagination: { total: number } }
+}
+
+interface MenuItemData {
+  id: number
+  documentId: string
+  title: string | null
+  link_type: "category" | "page" | "custom"
+  category: { data: { slug: string } | null } | null
+  page: { data: { slug: string } | null } | null
+  url: string | null
+  order: number
+  display_mode: "inline" | "dropdown"
+  open_new_tab: boolean
+}
+
+// ── 获取导航 ──
+async function fetchNavigation(
+  siteDocumentId: string,
+  locale: string = "en"
+): Promise<MenuItemData[]> {
+  const STRAPI_URL = import.meta.env.STRAPI_URL ?? "http://localhost:1339"
+
+  const qs = new URLSearchParams({
+    locale,
+    "populate[items][populate][category][fields][0]": "slug",
+    "populate[items][populate][page][fields][0]": "slug",
+    "filters[site][documentId][$eq]": siteDocumentId,
+    "filters[publishedAt][$notNull]": "true",
+  })
+
+  const res = await fetch(`${STRAPI_URL}/api/menus?${qs}`)
+  const json: MenuResponse = await res.json()
+
+  const menu = json.data[0]  // 每个 Site 只有一个 Menu
+  if (!menu?.items?.data) return []
+
+  return menu.items.data.sort((a, b) => a.order - b.order)
+}
+
+// ── URL 生成 ──
+function resolveUrl(item: MenuItemData): string {
+  switch (item.link_type) {
+    case "category":
+      return `/products/${item.category?.data?.slug ?? ""}`
+    case "page": {
+      const slug = item.page?.data?.slug ?? ""
+      return slug ? `/${slug}` : "/"
+    }
+    case "custom":
+      return item.url ?? "#"
+  }
+}
+
+// ── 渲染导航 ──
+// 遍历 items:
+//   display_mode === "inline"  → 渲染 <a href={resolveUrl(item)}>
+//   display_mode === "dropdown" 且 link_type === "category"
+//     → 额外调用 GET /api/categories?filters[documentId][$eq]=<categoryId>&populate[children]=*
+//       (或从已缓存的 Category 数据中查找 children) 生成子菜单
+//   display_mode === "dropdown" 且 link_type !== "category"
+//     → 渲染为下拉容器（子项通过在 order 上紧随其后的 inline 项分组或自行约定）
+```
+
+#### 4.8.6 导航层级与分组
+
+MenuItem 没有 `parent`/`children` 自引用。层级通过两种方式实现：
+
+| 方式 | 说明 |
+|------|------|
+| **Category 自动展开** | `display_mode=dropdown` + `link_type=category` → Astro 查 Category 的 `children` 生成子菜单 |
+| **order 分组** | `display_mode=dropdown` 的非 category 项作为"组头"，紧随其后的 `inline` 项作为其下拉子项（按 order 连续区间分组） |
+
+**三个典型场景**：
+
+```
+场景 A — Category 自动展开（推荐用于产品分类）:
+  order=10: Products    display_mode=dropdown  link_type=custom  url="/products"
+  order=20: Treadmills  display_mode=dropdown  link_type=category → Category.children 自动展开
+  order=30: Ex. Bikes   display_mode=dropdown  link_type=category → Category.children 自动展开
+
+场景 B — order 分组（用于 About Us 等非分类下拉）:
+  order=40: About Us    display_mode=dropdown  link_type=custom  url=""        ← 组头
+  order=41: Company     display_mode=inline    link_type=page   slug=about     ← 子项
+  order=42: Factory     display_mode=inline    link_type=custom url=/factory   ← 子项
+
+场景 C — 简单链接:
+  order=0:  Home        display_mode=inline    link_type=page   slug=""
+  order=50: Blog        display_mode=inline    link_type=custom url="/blog"
+  order=60: Contact     display_mode=inline    link_type=page   slug=contact-us
+```
+
+#### 4.8.7 单独查询 MenuItem（可选）
+
+如需按 Menu 过滤 MenuItem：
+
+```bash
+GET /api/menu-items?locale={lang}&populate[category][fields][0]=slug&populate[page][fields][0]=slug&filters[menu][documentId][$eq]={menuDocumentId}&filters[publishedAt][$notNull]=true&sort=order:asc
+```
+
+**Webhook**: Menu `afterUpdate` + MenuItem `afterUpdate` 均触发 `logBuildWebhook`。
 
 ---
 
@@ -779,36 +898,26 @@ API 返回: 5 个顶层条目，按 order 排序，各有 children
 
 **端点**: `GET /api/footers?locale=<lang>&populate=*&filters[site][documentId][$eq]=<site_documentId>&filters[publishedAt][$notNull]=true`
 
-**类型**: Collection Type
+**类型**: Collection Type，与 Site **一对一**
 
-**draftAndPublish**: `true`
+**draftAndPublish**: `true` / **i18n**: 已启用
 
-**i18n**: 已启用
+| 字段 | 类型 | i18n | 说明 |
+|------|------|------|------|
+| `site` | relation **oneToOne** → Site | — | 所属站点 |
+| `logo` | media (single, images) | — | 页脚 Logo |
+| `description` | text | localized | 公司简介 |
+| `columns` | component `elements.footer-section` (repeatable) | localized | 链接列组 |
+| `bottom_text` | text | localized | 底部版权文本 |
+| `bottom_links` | component `links.link` (repeatable) | localized | 底部法律链接 |
+| `social_links` | json | 否 | 社交媒体链接数组 |
 
-**与 Site 关系**: **一对一**（每个 Site 最多一条 Footer 记录）
+**组件结构**:
 
-| 字段 | 类型 | i18n | 必填 | 说明 |
-|------|------|------|------|------|
-| `site` | relation **oneToOne** → Site | — | 否 | 所属站点（一对一） |
-| `logo` | media (single, images) | — | 否 | 页脚 Logo |
-| `description` | text | localized | 否 | 公司简介（显示于页脚） |
-| `columns` | component `elements.footer-section` (repeatable) | localized | 否 | 链接列组 |
-| `bottom_text` | text | localized | 否 | 底部版权文本 |
-| `bottom_links` | component `links.link` (repeatable) | localized | 否 | 底部法律链接（Privacy, Terms 等） |
-| `social_links` | json | **不** localized | 否 | 社交媒体链接数组 |
+`elements.footer-section` → `{ title: string, links: links.link[] }`
+`links.link` → `{ url: string (required), text: string (required), newTab: boolean (default: false) }`
 
-**`columns` 结构** (`elements.footer-section`)：
-
-| 子字段 | 类型 | 说明 |
-|--------|------|------|
-| `title` | string | 列标题，如 "Products"、"Company" |
-| `links` | component `links.link` (repeatable) | 该列的链接列表 |
-
-每条 `links.link` 包含：`url` (string, required), `text` (string, required), `newTab` (boolean, default: false)。
-
-**`bottom_links` 结构**：同 `links.link`，用于 Privacy Policy、Terms of Service、Sitemap 等。
-
-**`social_links` JSON 结构示例**：
+**`social_links` JSON 结构**:
 
 ```json
 [
@@ -818,7 +927,11 @@ API 返回: 5 个顶层条目，按 order 排序，各有 children
 ]
 ```
 
-**响应示例** (`locale=en`)：
+---
+
+#### 4.9.1 响应示例
+
+`GET /api/footers?locale=en&populate=*&filters[site][documentId][$eq]=s1&filters[publishedAt][$notNull]=true`
 
 ```json
 {
@@ -827,11 +940,17 @@ API 返回: 5 个顶层条目，按 order 排序，各有 children
       "id": 1,
       "documentId": "footer1",
       "locale": "en",
-      "site": { "data": { "id": 1, "documentId": "site1", "name": "FitGear Pro" } },
+      "site": { "data": { "id": 1, "documentId": "s1", "name": "FitGear Pro" } },
       "logo": {
-        "id": 50,
-        "url": "/uploads/footer_logo_abc.png",
-        "alternativeText": "FitGear Pro logo"
+        "data": {
+          "id": 50,
+          "documentId": "img_50",
+          "url": "/uploads/footer_logo_abc.png",
+          "alternativeText": "FitGear Pro logo",
+          "width": 160,
+          "height": 40,
+          "formats": null
+        }
       },
       "description": "Premium B2B fitness equipment manufacturer serving global distributors since 2005.",
       "columns": [
@@ -878,18 +997,83 @@ API 返回: 5 个顶层条目，按 order 排序，各有 children
 }
 ```
 
-**Astro 使用方式**：
+> **注意**: `logo` 在 Strapi 5 中返回 `{ data: { ... } }` 包装（media 是关系字段），`url` 为相对路径，Astro 需拼接 `STRAPI_URL` 前缀。
 
-- 按 `site.documentId` 过滤获取站点页脚（通常只返回 1 条）
-- `columns` → 渲染多列链接分组（典型的 3-4 列页脚布局）
-- `bottom_text` → 版权栏
-- `bottom_links` → 版权栏右侧的法律链接
-- `social_links` → 社交媒体图标行
-- 布局参考：`columns` 占页脚主体（3-4 列），下方 `bottom_text` + `bottom_links` 组成底栏
+#### 4.9.2 Astro 调用代码
 
-**Webhook**: `afterUpdate` lifecycle → `logBuildWebhook(strapi, 'api::footer.footer', documentId)`。
+```typescript
+// ── 类型定义 ──
+interface FooterLink {
+  id: number
+  url: string
+  text: string
+  newTab: boolean
+}
 
-**B2B 营销网站典型 Footer 结构**：
+interface FooterColumn {
+  id: number
+  title: string
+  links: FooterLink[]
+}
+
+interface SocialLink {
+  platform: string
+  url: string
+  icon: string
+}
+
+interface FooterData {
+  documentId: string
+  locale: string
+  description: string | null
+  logo: {
+    data: {
+      url: string
+      alternativeText: string | null
+      width: number
+      height: number
+    } | null
+  } | null
+  columns: FooterColumn[]
+  bottom_text: string | null
+  bottom_links: FooterLink[]
+  social_links: SocialLink[]
+}
+
+interface FooterResponse {
+  data: FooterData[]
+  meta: { pagination: { total: number } }
+}
+
+// ── 获取页脚 ──
+async function fetchFooter(
+  siteDocumentId: string,
+  locale: string = "en"
+): Promise<FooterData | null> {
+  const STRAPI_URL = import.meta.env.STRAPI_URL ?? "http://localhost:1339"
+
+  const qs = new URLSearchParams({
+    locale,
+    "populate": "*",
+    "filters[site][documentId][$eq]": siteDocumentId,
+    "filters[publishedAt][$notNull]": "true",
+  })
+
+  const res = await fetch(`${STRAPI_URL}/api/footers?${qs}`)
+  const json: FooterResponse = await res.json()
+
+  return json.data[0] ?? null
+}
+
+// ── Logo URL 拼接 ──
+function logoUrl(footer: FooterData): string | null {
+  if (!footer.logo?.data?.url) return null
+  const STRAPI_URL = import.meta.env.STRAPI_URL ?? "http://localhost:1339"
+  return new URL(footer.logo.data.url, STRAPI_URL).href
+}
+```
+
+#### 4.9.3 典型 B2B 页脚布局
 
 ```
 [Logo] [Description]
@@ -902,6 +1086,13 @@ API 返回: 5 个顶层条目，按 order 排序，各有 children
 └─────────────┴─────────────┴─────────────┴──────────────────┘
 © 2026 Company. All rights reserved.  [Privacy Policy] [Terms]
 ```
+
+- `columns` → 页脚主体多列链接分组（遍历渲染）
+- `bottom_text` → 版权栏左侧文字
+- `bottom_links` → 版权栏右侧法律链接
+- `social_links` → 社交媒体图标行（可选置于 columns 上方或最底部）
+
+**Webhook**: `afterUpdate` lifecycle → `logBuildWebhook(strapi, 'api::footer.footer', documentId)`。
 
 ---
 
