@@ -20,6 +20,8 @@ const PUBLIC_READ_CONTENT_TYPES: PermissionConfig[] = [
   { uid: 'api::global.global', actions: ['find', 'findOne'] },
   { uid: 'api::blog.blog', actions: ['find', 'findOne'] },
   { uid: 'api::news.news', actions: ['find', 'findOne'] },
+  { uid: 'api::menu.menu', actions: ['find', 'findOne'] },
+  { uid: 'api::footer.footer', actions: ['find', 'findOne'] },
 ]
 
 export async function bootstrap() {

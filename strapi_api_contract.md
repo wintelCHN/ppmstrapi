@@ -1,6 +1,6 @@
 # Strapi API Contract — Astro 前端数据对接规范
 
-> **版本**: 1.1 | **更新**: 2026-06-15 | **Strapi 版本**: 5.47.1 CE
+> **版本**: 1.2 | **更新**: 2026-06-15 | **Strapi 版本**: 5.47.1 CE
 
 ---
 
@@ -17,6 +17,8 @@
    - [4.5 Site (站点)](#45-site-站点)
    - [4.6 Blog (博客文章)](#46-blog-博客文章)
    - [4.7 News (新闻)](#47-news-新闻)
+   - [4.8 Menu (导航菜单)](#48-menu-导航菜单)
+   - [4.9 Footer (页脚)](#49-footer-页脚)
 5. [Dynamic Zone Section 类型](#5-dynamic-zone-section-类型)
 6. [组件规范](#6-组件规范)
 7. [媒体对象](#7-媒体对象)
@@ -24,7 +26,7 @@
 9. [分页规范](#9-分页规范)
 10. [本地化 (i18n) 规范](#10-本地化-i18n-规范)
 11. [Astro 数据层实现指南](#11-astro-数据层实现指南)
-12. [计划中的内容类型](#12-计划中的内容类型)
+12. [已取消的模块](#12-已取消的模块)
 13. [路由生成规则](#13-路由生成规则)
 
 ---
@@ -80,6 +82,8 @@ GET /api/products?filters[$and][0][publishedAt][$notNull]=true&locale=en
 GET /api/pages?filters[$and][0][publishedAt][$notNull]=true&locale=en
 GET /api/blogs?filters[$and][0][publishedAt][$notNull]=true&locale=en
 GET /api/news-articles?filters[$and][0][publishedAt][$notNull]=true&locale=en
+GET /api/menus?filters[$and][0][publishedAt][$notNull]=true&locale=en
+GET /api/footers?filters[$and][0][publishedAt][$notNull]=true&locale=en
 ```
 
 说明：
@@ -455,6 +459,8 @@ Product → category → site
 | `blogs` | relation oneToMany → Blog | — | 反向关系，该站点下的所有博客文章 |
 | `news_articles` | relation oneToMany → News | — | 反向关系，该站点下的所有新闻 |
 | `pages` | relation oneToMany → Page | — | 反向关系，该站点下的所有自定义页面 |
+| `menus` | relation oneToMany → Menu | — | 反向关系，该站点下的所有导航菜单项 |
+| `footers` | relation oneToMany → Footer | — | 反向关系，该站点下的页脚配置（通常 1 条） |
 
 **注意**：`blogs` 和 `news_articles` 的 API 响应中字段名与 relation 名一致（即 `blogs` 和 `news_articles`），不是 `blog`/`news`。
 
@@ -480,6 +486,15 @@ Product → category → site
     "data": []
   },
   "news_articles": {
+    "data": []
+  },
+  "pages": {
+    "data": []
+  },
+  "menus": {
+    "data": []
+  },
+  "footers": {
     "data": []
   }
 }
@@ -633,6 +648,271 @@ Product → category → site
 - `content` 为 Strapi 5 blocks 格式，需要 block renderer 转换为 HTML
 
 **Webhook**: `afterUpdate` lifecycle → `logBuildWebhook(strapi, 'api::news.news', documentId)`。当前仅记录日志，不实际发送 HTTP 请求。
+
+---
+
+### 4.8 Menu (导航菜单)
+
+**端点**: `GET /api/menus?locale=<lang>&populate=*&filters[site][documentId][$eq]=<site_documentId>&filters[publishedAt][$notNull]=true`
+
+**类型**: Collection Type，支持自引用递归嵌套
+
+**draftAndPublish**: `true`
+
+**i18n**: 已启用
+
+| 字段 | 类型 | i18n | 必填 | 说明 |
+|------|------|------|------|------|
+| `title` | string | localized | 是 | 菜单项显示文本 |
+| `slug` | uid (from title) | **不** localized | 自动 | URL 标识 |
+| `type` | enum: link/dropdown/cta_button | **不** localized | 否 | 默认 `link` |
+| `url` | string | **不** localized | 否 | 自定义链接（留空则用 slug 生成路由） |
+| `order` | integer | **不** localized | 否 | 排序权重，默认 `0` |
+| `open_new_tab` | boolean | **不** localized | 否 | 是否新窗口打开，默认 `false` |
+| `site` | relation manyToOne → Site | — | 否 | 所属站点 |
+| `parent` | relation manyToOne → Menu (self) | — | 否 | 父级菜单项（用于下拉） |
+| `children` | relation oneToMany → Menu (self) | — | — | 子菜单项（反向） |
+
+**`type` 取值说明**：
+
+| 值 | 渲染方式 |
+|----|---------|
+| `link` | 普通 `<a>` 链接 |
+| `dropdown` | 下拉菜单，包含 `children` |
+| `cta_button` | CTA 按钮样式（如 "Get Quote"） |
+
+**层级结构**：`parent` + `children` 支持无限递归嵌套。渲染时按 `order` 升序排列，同级内 `order` 相同按 `id` 排序。
+
+**响应示例** (`locale=en`, 含嵌套子菜单)：
+
+```json
+{
+  "data": [
+    {
+      "id": 1,
+      "documentId": "menu1",
+      "locale": "en",
+      "title": "Products",
+      "slug": "products",
+      "type": "dropdown",
+      "url": null,
+      "order": 1,
+      "open_new_tab": false,
+      "site": { "data": { "id": 1, "documentId": "site1" } },
+      "parent": { "data": null },
+      "children": {
+        "data": [
+          {
+            "id": 2,
+            "documentId": "menu2",
+            "title": "Treadmills",
+            "slug": "treadmills",
+            "type": "link",
+            "url": "/products/treadmills",
+            "order": 0,
+            "parent": { "data": { "id": 1, "documentId": "menu1" } },
+            "children": { "data": [] }
+          },
+          {
+            "id": 3,
+            "documentId": "menu3",
+            "title": "Exercise Bikes",
+            "slug": "exercise-bikes",
+            "type": "link",
+            "url": "/products/exercise-bikes",
+            "order": 1,
+            "parent": { "data": { "id": 1, "documentId": "menu1" } },
+            "children": { "data": [] }
+          }
+        ]
+      }
+    },
+    {
+      "id": 4,
+      "documentId": "menu4",
+      "title": "About Us",
+      "slug": "about-us",
+      "type": "link",
+      "url": null,
+      "order": 2,
+      "site": { "data": { "id": 1, "documentId": "site1" } },
+      "parent": { "data": null },
+      "children": { "data": [] }
+    },
+    {
+      "id": 5,
+      "documentId": "menu5",
+      "title": "Get Quote",
+      "slug": "get-quote",
+      "type": "cta_button",
+      "url": "/contact-us",
+      "order": 99,
+      "site": { "data": { "id": 1, "documentId": "site1" } },
+      "parent": { "data": null },
+      "children": { "data": [] }
+    }
+  ],
+  "meta": { "pagination": { "page": 1, "pageSize": 100, "pageCount": 1, "total": 5 } }
+}
+```
+
+**Astro 使用方式**：
+
+- 按 `site.documentId` 过滤获取站点专属菜单
+- 构建菜单树：遍历 `menus`，按 `parent` 关系组装层级
+- 渲染规则：
+  - `type=link` → `<a href={url || slug}>`
+  - `type=dropdown` → 渲染 `<li>` 含子 `<ul>` 嵌套 children
+  - `type=cta_button` → 渲染为按钮样式链接
+- 排序：同级按 `order` 升序
+- 活跃状态：通过当前 URL 匹配 `slug` 或 `url`
+
+**Webhook**: `afterUpdate` lifecycle → `logBuildWebhook(strapi, 'api::menu.menu', documentId)`。
+
+**B2B 营销网站典型菜单结构**：
+
+```
+Home (link)
+Products (dropdown)
+  ├── Treadmills (link → /products/treadmills)
+  ├── Exercise Bikes (link → /products/exercise-bikes)
+  └── View All Products (link → /products)
+About Us (dropdown)
+  ├── Company (link → /pages/about)
+  ├── Quality Control (link → /pages/quality-control)
+  └── Factory Tour (link → /pages/factory-tour)
+Blog (link → /blog)
+Contact Us (link → /pages/contact-us)
+Get Quote (cta_button → /pages/contact-us)
+```
+
+---
+
+### 4.9 Footer (页脚)
+
+**端点**: `GET /api/footers?locale=<lang>&populate=*&filters[site][documentId][$eq]=<site_documentId>&filters[publishedAt][$notNull]=true`
+
+**类型**: Collection Type（通常每个 Site 只有一条 Footer 记录）
+
+**draftAndPublish**: `true`
+
+**i18n**: 已启用
+
+| 字段 | 类型 | i18n | 必填 | 说明 |
+|------|------|------|------|------|
+| `site` | relation manyToOne → Site | — | 否 | 所属站点 |
+| `logo` | media (single, images) | — | 否 | 页脚 Logo |
+| `description` | text | localized | 否 | 公司简介（显示于页脚） |
+| `columns` | component `elements.footer-section` (repeatable) | localized | 否 | 链接列组 |
+| `bottom_text` | text | localized | 否 | 底部版权文本 |
+| `bottom_links` | component `links.link` (repeatable) | localized | 否 | 底部法律链接（Privacy, Terms 等） |
+| `social_links` | json | **不** localized | 否 | 社交媒体链接数组 |
+
+**`columns` 结构** (`elements.footer-section`)：
+
+| 子字段 | 类型 | 说明 |
+|--------|------|------|
+| `title` | string | 列标题，如 "Products"、"Company" |
+| `links` | component `links.link` (repeatable) | 该列的链接列表 |
+
+每条 `links.link` 包含：`url` (string, required), `text` (string, required), `newTab` (boolean, default: false)。
+
+**`bottom_links` 结构**：同 `links.link`，用于 Privacy Policy、Terms of Service、Sitemap 等。
+
+**`social_links` JSON 结构示例**：
+
+```json
+[
+  { "platform": "linkedin", "url": "https://linkedin.com/company/xxx", "icon": "linkedin" },
+  { "platform": "youtube", "url": "https://youtube.com/@xxx", "icon": "youtube" },
+  { "platform": "facebook", "url": "https://facebook.com/xxx", "icon": "facebook" }
+]
+```
+
+**响应示例** (`locale=en`)：
+
+```json
+{
+  "data": [
+    {
+      "id": 1,
+      "documentId": "footer1",
+      "locale": "en",
+      "site": { "data": { "id": 1, "documentId": "site1", "name": "FitGear Pro" } },
+      "logo": {
+        "id": 50,
+        "url": "/uploads/footer_logo_abc.png",
+        "alternativeText": "FitGear Pro logo"
+      },
+      "description": "Premium B2B fitness equipment manufacturer serving global distributors since 2005.",
+      "columns": [
+        {
+          "id": 101,
+          "title": "Products",
+          "links": [
+            { "id": 201, "url": "/products/treadmills", "text": "Treadmills", "newTab": false },
+            { "id": 202, "url": "/products/exercise-bikes", "text": "Exercise Bikes", "newTab": false },
+            { "id": 203, "url": "/products/home-gyms", "text": "Home Gyms", "newTab": false }
+          ]
+        },
+        {
+          "id": 102,
+          "title": "Company",
+          "links": [
+            { "id": 204, "url": "/pages/about", "text": "About Us", "newTab": false },
+            { "id": 205, "url": "/blog", "text": "Blog", "newTab": false },
+            { "id": 206, "url": "/pages/contact-us", "text": "Contact", "newTab": false }
+          ]
+        },
+        {
+          "id": 103,
+          "title": "Support",
+          "links": [
+            { "id": 207, "url": "/pages/faq", "text": "FAQ", "newTab": false },
+            { "id": 208, "url": "/pages/shipping", "text": "Shipping Info", "newTab": false },
+            { "id": 209, "url": "/pages/warranty", "text": "Warranty", "newTab": false }
+          ]
+        }
+      ],
+      "bottom_text": "© 2026 FitGear Pro. All rights reserved.",
+      "bottom_links": [
+        { "id": 301, "url": "/pages/privacy-policy", "text": "Privacy Policy", "newTab": false },
+        { "id": 302, "url": "/pages/terms-of-service", "text": "Terms of Service", "newTab": false }
+      ],
+      "social_links": [
+        { "platform": "linkedin", "url": "https://linkedin.com/company/fitgearpro", "icon": "linkedin" },
+        { "platform": "youtube", "url": "https://youtube.com/@fitgearpro", "icon": "youtube" }
+      ]
+    }
+  ],
+  "meta": { "pagination": { "page": 1, "pageSize": 25, "pageCount": 1, "total": 1 } }
+}
+```
+
+**Astro 使用方式**：
+
+- 按 `site.documentId` 过滤获取站点页脚（通常只返回 1 条）
+- `columns` → 渲染多列链接分组（典型的 3-4 列页脚布局）
+- `bottom_text` → 版权栏
+- `bottom_links` → 版权栏右侧的法律链接
+- `social_links` → 社交媒体图标行
+- 布局参考：`columns` 占页脚主体（3-4 列），下方 `bottom_text` + `bottom_links` 组成底栏
+
+**Webhook**: `afterUpdate` lifecycle → `logBuildWebhook(strapi, 'api::footer.footer', documentId)`。
+
+**B2B 营销网站典型 Footer 结构**：
+
+```
+[Logo] [Description]
+┌─────────────┬─────────────┬─────────────┬──────────────────┐
+│ Products    │ Company     │ Support     │ Contact          │
+│ Treadmills  │ About Us    │ FAQ         │ sales@company.com │
+│ Ex. Bikes   │ Blog        │ Shipping    │ +1-555-0123      │
+│ Home Gyms   │ News        │ Warranty    │ Shenzhen, China   │
+│ View All →  │ Contact     │ OEM/ODM     │                   │
+└─────────────┴─────────────┴─────────────┴──────────────────┘
+© 2026 Company. All rights reserved.  [Privacy Policy] [Terms]
+```
 
 ---
 
@@ -1008,6 +1288,8 @@ GET /api/categories?sort=name:asc
 | Product | name, description, images, videos, seo_* | slug, sku, model_no, price, currency, moq, status, category |
 | Blog | title, content, featured_image, seo_* | slug, status, site |
 | News | title, content, featured_image, seo_* | slug, status, site |
+| Menu | title | slug, type, url, order, open_new_tab, site, parent |
+| Footer | description, columns, bottom_text, bottom_links | site, logo, social_links |
 | Site | （不适用，无 i18n） | 所有字段 |
 
 ### 10.4 Fallback 实现
@@ -1055,6 +1337,8 @@ src/
 │           ├── products.ts    # fetchAllProducts(locale)
 │           ├── blogs.ts       # fetchAllBlogs(locale)
 │           ├── news.ts        # fetchAllNews(locale)
+│           ├── menus.ts       # fetchMenus(locale, siteDocumentId)
+│           ├── footers.ts     # fetchFooter(locale, siteDocumentId)
 │           └── site.ts        # fetchSite(slug)
 ```
 
@@ -1110,8 +1394,10 @@ export async function strapiFetch<T>(
 
 ```
 Astro Build Start
-  ├── fetchGlobal(locale)           → Global 单例
-  ├── fetchSite(domain)             → Site 配置
+  ├── fetchGlobal(locale)           → Global 单例 (navbar, footer 组件已废弃，改用 Menu/Footer)
+  ├── fetchSite(documentId)         → Site 配置
+  ├── fetchMenus(locale, siteId)    → Menu[] (构建导航树)
+  ├── fetchFooter(locale, siteId)   → Footer (页脚配置)
   ├── fetchAllPages(locale)         → Page[] (含 contentSections)
   ├── fetchAllCategories(locale)    → Category[] (构建树)
   ├── fetchAllProducts(locale)      → Product[] (按 category 分组)
@@ -1119,6 +1405,7 @@ Astro Build Start
   ├── fetchAllNews(locale)          → News[] (按 publishedAt 排序)
   ├── 归一化所有响应
   ├── 生成路由
+  │   ├── /
   │   ├── /pages/<slug>
   │   ├── /products/<category>/<product>
   │   ├── /products/<category>
@@ -1126,6 +1413,8 @@ Astro Build Start
   │   ├── /news/<slug>
   │   └── /<lang>/...
   └── 渲染静态 HTML
+      ├── Header: Menu 数据 → 递归渲染导航
+      └── Footer: Footer 数据 → 列布局 + 底栏
 ```
 
 ---

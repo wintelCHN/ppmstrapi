@@ -91,6 +91,18 @@
       "relation": "oneToMany",
       "target": "api::page.page",
       "mappedBy": "site"
+    },
+    "menus": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::menu.menu",
+      "mappedBy": "site"
+    },
+    "footers": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::footer.footer",
+      "mappedBy": "site"
     }
   }
 }
