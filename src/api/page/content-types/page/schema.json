@@ -5,7 +5,8 @@
     "singularName": "page",
     "pluralName": "pages",
     "displayName": "Page",
-    "name": "page"
+    "name": "page",
+    "description": "Custom pages with dynamic zone content sections"
   },
   "options": {
     "draftAndPublish": true
@@ -21,6 +22,25 @@
       "pluginOptions": {
         "i18n": {
           "localized": true
+        }
+      }
+    },
+    "slug": {
+      "type": "string",
+      "regex": "^$|^[a-zA-Z/-]+$",
+      "pluginOptions": {
+        "i18n": {
+          "localized": false
+        }
+      }
+    },
+    "status": {
+      "type": "enumeration",
+      "enum": ["draft", "published"],
+      "default": "draft",
+      "pluginOptions": {
+        "i18n": {
+          "localized": false
         }
       }
     },
@@ -54,14 +74,11 @@
         }
       }
     },
-    "slug": {
-      "pluginOptions": {
-        "i18n": {
-          "localized": false
-        }
-      },
-      "type": "string",
-      "regex": "^$|^[a-zA-Z/-]+$"
+    "site": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::site.site",
+      "inversedBy": "pages"
     }
   }
 }

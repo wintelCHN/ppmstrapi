@@ -85,6 +85,12 @@
       "relation": "oneToMany",
       "target": "api::news.news",
       "mappedBy": "site"
+    },
+    "pages": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::page.page",
+      "mappedBy": "site"
     }
   }
 }

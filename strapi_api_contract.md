@@ -225,7 +225,7 @@ interface StrapiSingleTypeResponse<T> {
 
 ### 4.2 Page (页面)
 
-**端点**: `GET /api/pages?locale=<lang>&populate=*&filters[publishedAt][$notNull]=true`
+**端点**: `GET /api/pages?locale=<lang>&populate=*&filters[publishedAt][$notNull]=true&filters[status][$eq]=published`
 
 **类型**: Collection Type
 
@@ -235,10 +235,12 @@ interface StrapiSingleTypeResponse<T> {
 
 | 字段 | 类型 | i18n | 必填 | 说明 |
 |------|------|------|------|------|
-| `shortName` | string | localized | 否 | Admin 中的人名识别名 |
-| `slug` | string (自定义正则) | **不** localized | 是 | URL 路径段，正则 `^$|^[a-zA-Z/-]+$` |
+| `shortName` | string | localized | 否 | Admin 中的人类可读识别名 |
+| `slug` | string (自定义正则) | **不** localized | 是 | URL 路径段，正则 `^$|^[a-zA-Z/-]+$`（空字符串=首页） |
+| `status` | enum: draft/published | **不** localized | 否 | 业务状态，默认 `draft` |
 | `metadata` | component `meta.metadata` | localized | 是 | 页面级 SEO |
 | `contentSections` | dynamiczone | localized | 否 | 页面内容区域（动态区域） |
+| `site` | relation manyToOne → Site | — | 否 | 所属站点 |
 
 **Dynamic Zone 可用组件**（详见 [§5](#5-dynamic-zone-section-类型)）：
 
@@ -254,12 +256,19 @@ interface StrapiSingleTypeResponse<T> {
 | Pricing | `sections.pricing` | 定价方案表 |
 | Lead Form | `sections.lead-form` | 询盘表单（仅展示，不处理提交） |
 
+**`status` 字段**: `draft` | `published`。生产构建需同时满足 `publishedAt != null` **且** `status == 'published'`。
+
+**`slug` 字段**: 自定义字符串，支持空字符串（首页）和带 `/` 的路径（如 `about/team`）。不是自动生成的 `uid` 类型。
+
 **Astro 使用方式**：
 
-- `slug` → 路由 `/pages/<slug>` 和 `/<lang>/pages/<slug>`
-- `slug` 为空字符串时 → 可能为首页（需判断）
+- 路由：`/<slug>`（slug 为空时渲染为首页 `/`）
+- 非默认语言：`/<lang>/<slug>`
 - `contentSections` → 遍历渲染，按数组顺序输出，未知 section 类型安全跳过并记录警告
 - `metadata` → 页面级 `<head>` SEO
+- SEO fallback：Page SEO → Site `seo_default_*` → Global `metadata`
+
+**Webhook**: `afterUpdate` lifecycle → `logBuildWebhook(strapi, 'api::page.page', documentId)`。当前仅记录日志。
 
 **响应示例** (省略 fields):
 
@@ -445,6 +454,7 @@ Product → category → site
 | `categories` | relation oneToMany → Category | — | 反向关系，该站点下的所有分类 |
 | `blogs` | relation oneToMany → Blog | — | 反向关系，该站点下的所有博客文章 |
 | `news_articles` | relation oneToMany → News | — | 反向关系，该站点下的所有新闻 |
+| `pages` | relation oneToMany → Page | — | 反向关系，该站点下的所有自定义页面 |
 
 **注意**：`blogs` 和 `news_articles` 的 API 响应中字段名与 relation 名一致（即 `blogs` 和 `news_articles`），不是 `blog`/`news`。
 
@@ -993,7 +1003,7 @@ GET /api/categories?sort=name:asc
 | 内容类型 | Localized 字段 | Non-localized 字段 |
 |----------|---------------|-------------------|
 | Global | metadata, metaTitleSuffix, favicon, notificationBanner, navbar, footer | — |
-| Page | shortName, metadata, contentSections | slug |
+| Page | shortName, metadata, contentSections | slug, status, site |
 | Category | name, description, seo_* | slug, site, parent |
 | Product | name, description, images, videos, seo_* | slug, sku, model_no, price, currency, moq, status, category |
 | Blog | title, content, featured_image, seo_* | slug, status, site |
