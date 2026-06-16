@@ -1,0 +1,44 @@
+{
+  "collectionName": "components_sections_faq_groups",
+  "info": {
+    "name": "FAQ Group",
+    "displayName": "FAQ Group",
+    "icon": "question-circle",
+    "description": "FAQ accordion block — add Q&A items directly as a content block on any page"
+  },
+  "options": {},
+  "attributes": {
+    "title": {
+      "type": "string",
+      "default": "Frequently Asked Questions"
+    },
+    "description": {
+      "type": "text"
+    },
+    "items": {
+      "type": "component",
+      "repeatable": true,
+      "component": "elements.faq-item",
+      "required": true
+    },
+    "layout": {
+      "type": "enumeration",
+      "enum": ["accordion", "grid", "list"],
+      "default": "accordion"
+    },
+    "max_items": {
+      "type": "integer",
+      "default": 10,
+      "min": 1,
+      "max": 50
+    },
+    "show_search": {
+      "type": "boolean",
+      "default": false
+    },
+    "enable_schema_markup": {
+      "type": "boolean",
+      "default": true
+    }
+  }
+}

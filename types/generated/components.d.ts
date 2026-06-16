@@ -1,5 +1,53 @@
 import type { Schema, Struct } from '@strapi/strapi';
 
+export interface ElementsComparisonColumn extends Struct.ComponentSchema {
+  collectionName: 'components_elements_comparison_columns';
+  info: {
+    description: 'A single column in a comparison table (e.g. a product or feature set)';
+    displayName: 'Comparison Column';
+    icon: 'column';
+    name: 'Comparison Column';
+  };
+  attributes: {
+    header: Schema.Attribute.String & Schema.Attribute.Required;
+    image: Schema.Attribute.Media<'images'>;
+    is_featured: Schema.Attribute.Boolean & Schema.Attribute.DefaultTo<false>;
+    sort_order: Schema.Attribute.Integer & Schema.Attribute.DefaultTo<0>;
+    sub_header: Schema.Attribute.String;
+  };
+}
+
+export interface ElementsComparisonRow extends Struct.ComponentSchema {
+  collectionName: 'components_elements_comparison_rows';
+  info: {
+    description: 'A single row/feature row in a comparison table';
+    displayName: 'Comparison Row';
+    icon: 'minus';
+    name: 'Comparison Row';
+  };
+  attributes: {
+    label: Schema.Attribute.String & Schema.Attribute.Required;
+    sort_order: Schema.Attribute.Integer & Schema.Attribute.DefaultTo<0>;
+    values: Schema.Attribute.JSON;
+  };
+}
+
+export interface ElementsFaqItem extends Struct.ComponentSchema {
+  collectionName: 'components_elements_faq_items';
+  info: {
+    description: 'A single FAQ question-answer pair for manual FAQ blocks';
+    displayName: 'FAQ Item';
+    icon: 'question';
+    name: 'FAQ Item';
+  };
+  attributes: {
+    answer: Schema.Attribute.Blocks;
+    answer_summary: Schema.Attribute.Text;
+    question: Schema.Attribute.String & Schema.Attribute.Required;
+    sort_order: Schema.Attribute.Integer & Schema.Attribute.DefaultTo<0>;
+  };
+}
+
 export interface ElementsFeature extends Struct.ComponentSchema {
   collectionName: 'components_elements_features';
   info: {
@@ -98,6 +146,25 @@ export interface ElementsPlan extends Struct.ComponentSchema {
     name: Schema.Attribute.String;
     price: Schema.Attribute.Decimal;
     pricePeriod: Schema.Attribute.String;
+  };
+}
+
+export interface ElementsStatisticItem extends Struct.ComponentSchema {
+  collectionName: 'components_elements_statistic_items';
+  info: {
+    description: 'A single statistic / data fact with optional counter animation';
+    displayName: 'Statistic Item';
+    icon: 'chart-pie';
+    name: 'Statistic Item';
+  };
+  attributes: {
+    description: Schema.Attribute.Text;
+    icon: Schema.Attribute.Media<'images'>;
+    label: Schema.Attribute.String & Schema.Attribute.Required;
+    numeric_value: Schema.Attribute.Integer;
+    sort_order: Schema.Attribute.Integer & Schema.Attribute.DefaultTo<0>;
+    source: Schema.Attribute.Text;
+    value: Schema.Attribute.String & Schema.Attribute.Required;
   };
 }
 
@@ -224,6 +291,101 @@ export interface SectionsBottomActions extends Struct.ComponentSchema {
   };
 }
 
+export interface SectionsComparisonTable extends Struct.ComponentSchema {
+  collectionName: 'components_sections_comparison_tables';
+  info: {
+    description: 'Product or feature comparison table for SEO/GEO pages';
+    displayName: 'Comparison Table';
+    icon: 'table';
+    name: 'Comparison Table';
+  };
+  attributes: {
+    columns: Schema.Attribute.Component<'elements.comparison-column', true>;
+    compared_products: Schema.Attribute.Relation<
+      'manyToMany',
+      'api::product.product'
+    >;
+    cta_label: Schema.Attribute.String & Schema.Attribute.DefaultTo<'Compare'>;
+    description: Schema.Attribute.Text;
+    enable_sorting: Schema.Attribute.Boolean &
+      Schema.Attribute.DefaultTo<false>;
+    highlight_column: Schema.Attribute.Integer &
+      Schema.Attribute.SetMinMax<
+        {
+          min: 0;
+        },
+        number
+      > &
+      Schema.Attribute.DefaultTo<0>;
+    mode: Schema.Attribute.Enumeration<['manual', 'products', 'features']> &
+      Schema.Attribute.Required &
+      Schema.Attribute.DefaultTo<'products'>;
+    rows: Schema.Attribute.Component<'elements.comparison-row', true>;
+    title: Schema.Attribute.String;
+  };
+}
+
+export interface SectionsCtaBanner extends Struct.ComponentSchema {
+  collectionName: 'components_sections_cta_banners';
+  info: {
+    description: 'Enhanced call-to-action banner with A/B testing variant support';
+    displayName: 'CTA Banner';
+    icon: 'cursor';
+    name: 'CTA Banner';
+  };
+  attributes: {
+    ab_test_id: Schema.Attribute.String;
+    alignment: Schema.Attribute.Enumeration<['left', 'center', 'right']> &
+      Schema.Attribute.DefaultTo<'center'>;
+    background_color: Schema.Attribute.Enumeration<
+      ['brand', 'dark', 'light', 'gradient', 'none']
+    > &
+      Schema.Attribute.DefaultTo<'brand'>;
+    background_image: Schema.Attribute.Media<'images'>;
+    primary_button: Schema.Attribute.Component<'links.button-link', false> &
+      Schema.Attribute.Required;
+    secondary_button: Schema.Attribute.Component<'links.button-link', false>;
+    subtitle: Schema.Attribute.Text;
+    title: Schema.Attribute.String & Schema.Attribute.Required;
+    variant: Schema.Attribute.Enumeration<
+      ['primary', 'secondary', 'minimal', 'floating']
+    > &
+      Schema.Attribute.Required &
+      Schema.Attribute.DefaultTo<'primary'>;
+  };
+}
+
+export interface SectionsFaqGroup extends Struct.ComponentSchema {
+  collectionName: 'components_sections_faq_groups';
+  info: {
+    description: 'FAQ accordion block \u2014 add Q&A items directly as a content block on any page';
+    displayName: 'FAQ Group';
+    icon: 'question-circle';
+    name: 'FAQ Group';
+  };
+  attributes: {
+    description: Schema.Attribute.Text;
+    enable_schema_markup: Schema.Attribute.Boolean &
+      Schema.Attribute.DefaultTo<true>;
+    items: Schema.Attribute.Component<'elements.faq-item', true> &
+      Schema.Attribute.Required;
+    layout: Schema.Attribute.Enumeration<['accordion', 'grid', 'list']> &
+      Schema.Attribute.DefaultTo<'accordion'>;
+    max_items: Schema.Attribute.Integer &
+      Schema.Attribute.SetMinMax<
+        {
+          max: 50;
+          min: 1;
+        },
+        number
+      > &
+      Schema.Attribute.DefaultTo<10>;
+    show_search: Schema.Attribute.Boolean & Schema.Attribute.DefaultTo<false>;
+    title: Schema.Attribute.String &
+      Schema.Attribute.DefaultTo<'Frequently Asked Questions'>;
+  };
+}
+
 export interface SectionsFeatureColumnsGroup extends Struct.ComponentSchema {
   collectionName: 'components_slices_feature_columns_groups';
   info: {
@@ -283,16 +445,23 @@ export interface SectionsLargeVideo extends Struct.ComponentSchema {
 export interface SectionsLeadForm extends Struct.ComponentSchema {
   collectionName: 'components_sections_lead_forms';
   info: {
-    description: '';
-    displayName: 'Lead form';
-    icon: 'at';
+    description: 'Contact/inquiry form that submits to Lead Center. Configure appearance here; Astro frontend renders the form and POSTs to /api/public/lead.';
+    displayName: 'Lead Form (Lead Center)';
+    icon: 'envelop';
     name: 'Lead form';
   };
   attributes: {
-    emailPlaceholder: Schema.Attribute.String;
-    location: Schema.Attribute.String;
-    submitButton: Schema.Attribute.Component<'links.button', false>;
-    title: Schema.Attribute.String;
+    description: Schema.Attribute.Text;
+    formType: Schema.Attribute.Enumeration<['quick', 'rfq', 'contact']> &
+      Schema.Attribute.Required &
+      Schema.Attribute.DefaultTo<'quick'>;
+    submitButtonText: Schema.Attribute.String &
+      Schema.Attribute.DefaultTo<'Submit Inquiry'>;
+    successMessage: Schema.Attribute.Text &
+      Schema.Attribute.DefaultTo<"Thank you! Your inquiry has been submitted. We'll get back to you soon.">;
+    title: Schema.Attribute.String &
+      Schema.Attribute.Required &
+      Schema.Attribute.DefaultTo<'Get in Touch'>;
   };
 }
 
@@ -321,6 +490,36 @@ export interface SectionsRichText extends Struct.ComponentSchema {
   };
 }
 
+export interface SectionsStatistics extends Struct.ComponentSchema {
+  collectionName: 'components_sections_statistics';
+  info: {
+    description: 'Data statistics / counter block for credibility and SEO';
+    displayName: 'Statistics';
+    icon: 'chart-bar';
+    name: 'Statistics';
+  };
+  attributes: {
+    animate_counters: Schema.Attribute.Boolean &
+      Schema.Attribute.DefaultTo<true>;
+    columns: Schema.Attribute.Integer &
+      Schema.Attribute.SetMinMax<
+        {
+          max: 6;
+          min: 2;
+        },
+        number
+      > &
+      Schema.Attribute.DefaultTo<4>;
+    description: Schema.Attribute.Text;
+    items: Schema.Attribute.Component<'elements.statistic-item', true> &
+      Schema.Attribute.Required;
+    layout: Schema.Attribute.Enumeration<['grid', 'inline', 'carousel']> &
+      Schema.Attribute.DefaultTo<'grid'>;
+    show_source: Schema.Attribute.Boolean & Schema.Attribute.DefaultTo<false>;
+    title: Schema.Attribute.String;
+  };
+}
+
 export interface SectionsTestimonialsGroup extends Struct.ComponentSchema {
   collectionName: 'components_slices_testimonials_groups';
   info: {
@@ -337,9 +536,56 @@ export interface SectionsTestimonialsGroup extends Struct.ComponentSchema {
   };
 }
 
+export interface SharedRelatedProducts extends Struct.ComponentSchema {
+  collectionName: 'components_shared_related_products';
+  info: {
+    description: 'Display related products via manual selection, category, tags, or hybrid mode.';
+    displayName: 'Related Products';
+    icon: 'shopping-cart';
+    name: 'Related products';
+  };
+  attributes: {
+    category_filter: Schema.Attribute.Relation<
+      'manyToOne',
+      'api::category.category'
+    >;
+    limit: Schema.Attribute.Integer &
+      Schema.Attribute.SetMinMax<
+        {
+          max: 20;
+          min: 1;
+        },
+        number
+      > &
+      Schema.Attribute.DefaultTo<6>;
+    manual_products: Schema.Attribute.Relation<
+      'manyToMany',
+      'api::product.product'
+    >;
+    mode: Schema.Attribute.Enumeration<
+      ['manual', 'category', 'tag', 'hybrid']
+    > &
+      Schema.Attribute.Required &
+      Schema.Attribute.DefaultTo<'manual'>;
+    show_cta: Schema.Attribute.Boolean & Schema.Attribute.DefaultTo<true>;
+    show_description: Schema.Attribute.Boolean &
+      Schema.Attribute.DefaultTo<true>;
+    sort_by: Schema.Attribute.Enumeration<
+      ['featured', 'newest', 'alphabetical', 'manual_priority']
+    > &
+      Schema.Attribute.DefaultTo<'featured'>;
+    tag_filters: Schema.Attribute.JSON;
+    title: Schema.Attribute.String &
+      Schema.Attribute.DefaultTo<'Related Products'>;
+  };
+}
+
 declare module '@strapi/strapi' {
   export module Public {
     export interface ComponentSchemas {
+      'elements.comparison-column': ElementsComparisonColumn;
+      'elements.comparison-row': ElementsComparisonRow;
+      'elements.faq-item': ElementsFaqItem;
       'elements.feature': ElementsFeature;
       'elements.feature-column': ElementsFeatureColumn;
       'elements.feature-row': ElementsFeatureRow;
@@ -347,6 +593,7 @@ declare module '@strapi/strapi' {
       'elements.logos': ElementsLogos;
       'elements.notification-banner': ElementsNotificationBanner;
       'elements.plan': ElementsPlan;
+      'elements.statistic-item': ElementsStatisticItem;
       'elements.testimonial': ElementsTestimonial;
       'layout.footer': LayoutFooter;
       'layout.navbar': LayoutNavbar;
@@ -355,6 +602,9 @@ declare module '@strapi/strapi' {
       'links.link': LinksLink;
       'meta.metadata': MetaMetadata;
       'sections.bottom-actions': SectionsBottomActions;
+      'sections.comparison-table': SectionsComparisonTable;
+      'sections.cta-banner': SectionsCtaBanner;
+      'sections.faq-group': SectionsFaqGroup;
       'sections.feature-columns-group': SectionsFeatureColumnsGroup;
       'sections.feature-rows-group': SectionsFeatureRowsGroup;
       'sections.hero': SectionsHero;
@@ -362,7 +612,9 @@ declare module '@strapi/strapi' {
       'sections.lead-form': SectionsLeadForm;
       'sections.pricing': SectionsPricing;
       'sections.rich-text': SectionsRichText;
+      'sections.statistics': SectionsStatistics;
       'sections.testimonials-group': SectionsTestimonialsGroup;
+      'shared.related-products': SharedRelatedProducts;
     }
   }
 }

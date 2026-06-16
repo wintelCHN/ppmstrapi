@@ -1,0 +1,41 @@
+{
+  "collectionName": "components_elements_statistic_items",
+  "info": {
+    "name": "Statistic Item",
+    "displayName": "Statistic Item",
+    "icon": "chart-pie",
+    "description": "A single statistic / data fact with optional counter animation"
+  },
+  "options": {},
+  "attributes": {
+    "label": {
+      "type": "string",
+      "required": true
+    },
+    "value": {
+      "type": "string",
+      "required": true,
+      "description": "Display value — can include unit (e.g. '99.9%', '10K+', '24/7')"
+    },
+    "numeric_value": {
+      "type": "integer",
+      "description": "Numeric value for counter animation (omit if value is text-only)"
+    },
+    "icon": {
+      "allowedTypes": ["images"],
+      "type": "media",
+      "multiple": false
+    },
+    "description": {
+      "type": "text"
+    },
+    "source": {
+      "type": "text",
+      "description": "Optional data source citation"
+    },
+    "sort_order": {
+      "type": "integer",
+      "default": 0
+    }
+  }
+}

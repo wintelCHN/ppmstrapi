@@ -1,0 +1,24 @@
+{
+  "collectionName": "components_elements_comparison_rows",
+  "info": {
+    "name": "Comparison Row",
+    "displayName": "Comparison Row",
+    "icon": "minus",
+    "description": "A single row/feature row in a comparison table"
+  },
+  "options": {},
+  "attributes": {
+    "label": {
+      "type": "string",
+      "required": true
+    },
+    "values": {
+      "type": "json",
+      "description": "Array of values matching column order. Each value can be text, boolean (✓/✗), or number."
+    },
+    "sort_order": {
+      "type": "integer",
+      "default": 0
+    }
+  }
+}

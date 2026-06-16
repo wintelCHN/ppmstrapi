@@ -103,6 +103,12 @@
       "relation": "oneToOne",
       "target": "api::footer.footer",
       "inversedBy": "site"
+    },
+    "keyword_clusters": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::keyword-cluster.keyword-cluster",
+      "mappedBy": "site"
     }
   }
 }

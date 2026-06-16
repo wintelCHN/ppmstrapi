@@ -1,0 +1,55 @@
+{
+  "collectionName": "components_sections_cta_banners",
+  "info": {
+    "name": "CTA Banner",
+    "displayName": "CTA Banner",
+    "icon": "cursor",
+    "description": "Enhanced call-to-action banner with A/B testing variant support"
+  },
+  "options": {},
+  "attributes": {
+    "title": {
+      "type": "string",
+      "required": true
+    },
+    "subtitle": {
+      "type": "text"
+    },
+    "variant": {
+      "type": "enumeration",
+      "enum": ["primary", "secondary", "minimal", "floating"],
+      "default": "primary",
+      "required": true
+    },
+    "primary_button": {
+      "type": "component",
+      "repeatable": false,
+      "component": "links.button-link",
+      "required": true
+    },
+    "secondary_button": {
+      "type": "component",
+      "repeatable": false,
+      "component": "links.button-link"
+    },
+    "background_image": {
+      "allowedTypes": ["images"],
+      "type": "media",
+      "multiple": false
+    },
+    "ab_test_id": {
+      "type": "string",
+      "description": "A/B testing variant identifier"
+    },
+    "background_color": {
+      "type": "enumeration",
+      "enum": ["brand", "dark", "light", "gradient", "none"],
+      "default": "brand"
+    },
+    "alignment": {
+      "type": "enumeration",
+      "enum": ["left", "center", "right"],
+      "default": "center"
+    }
+  }
+}

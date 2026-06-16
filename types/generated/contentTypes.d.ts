@@ -726,6 +726,96 @@ export interface ApiGlobalGlobal extends Struct.SingleTypeSchema {
   };
 }
 
+export interface ApiKeywordClusterKeywordCluster
+  extends Struct.CollectionTypeSchema {
+  collectionName: 'keyword_clusters';
+  info: {
+    description: 'Group keywords by topic and search intent for programmatic SEO';
+    displayName: 'Keyword Cluster';
+    name: 'keyword-cluster';
+    pluralName: 'keyword-clusters';
+    singularName: 'keyword-cluster';
+  };
+  options: {
+    draftAndPublish: true;
+  };
+  pluginOptions: {
+    i18n: {
+      localized: true;
+    };
+  };
+  attributes: {
+    country: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: false;
+        };
+      }>;
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    industry: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: false;
+        };
+      }>;
+    language: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: false;
+        };
+      }> &
+      Schema.Attribute.DefaultTo<'en'>;
+    locale: Schema.Attribute.String;
+    localizations: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::keyword-cluster.keyword-cluster'
+    >;
+    name: Schema.Attribute.String &
+      Schema.Attribute.Required &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    pages: Schema.Attribute.Relation<'oneToMany', 'api::page.page'>;
+    primary_keyword: Schema.Attribute.String &
+      Schema.Attribute.Required &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: false;
+        };
+      }>;
+    publishedAt: Schema.Attribute.DateTime;
+    search_intent: Schema.Attribute.Enumeration<
+      ['informational', 'commercial', 'transactional', 'comparison']
+    > &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: false;
+        };
+      }> &
+      Schema.Attribute.DefaultTo<'commercial'>;
+    secondary_keywords: Schema.Attribute.JSON &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: false;
+        };
+      }>;
+    site: Schema.Attribute.Relation<'manyToOne', 'api::site.site'>;
+    slug: Schema.Attribute.UID<'name'> &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: false;
+        };
+      }>;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+  };
+}
+
 export interface ApiLeadLead extends Struct.CollectionTypeSchema {
   collectionName: 'leads';
   info: {
@@ -1008,6 +1098,11 @@ export interface ApiPagePage extends Struct.CollectionTypeSchema {
         'sections.rich-text',
         'sections.pricing',
         'sections.lead-form',
+        'sections.faq-group',
+        'sections.comparison-table',
+        'sections.statistics',
+        'sections.cta-banner',
+        'shared.related-products',
       ]
     > &
       Schema.Attribute.SetPluginOptions<{
@@ -1018,6 +1113,10 @@ export interface ApiPagePage extends Struct.CollectionTypeSchema {
     createdAt: Schema.Attribute.DateTime;
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
+    keyword_cluster: Schema.Attribute.Relation<
+      'manyToOne',
+      'api::keyword-cluster.keyword-cluster'
+    >;
     locale: Schema.Attribute.String;
     localizations: Schema.Attribute.Relation<'oneToMany', 'api::page.page'>;
     metadata: Schema.Attribute.Component<'meta.metadata', false> &
@@ -1089,6 +1188,13 @@ export interface ApiProductProduct extends Struct.CollectionTypeSchema {
           localized: true;
         };
       }>;
+    featured: Schema.Attribute.Boolean &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: false;
+        };
+      }> &
+      Schema.Attribute.DefaultTo<false>;
     images: Schema.Attribute.Media<'images', true> &
       Schema.Attribute.SetPluginOptions<{
         i18n: {
@@ -1164,6 +1270,12 @@ export interface ApiProductProduct extends Struct.CollectionTypeSchema {
         };
       }> &
       Schema.Attribute.DefaultTo<'draft'>;
+    tags: Schema.Attribute.JSON &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: false;
+        };
+      }>;
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
@@ -1206,6 +1318,10 @@ export interface ApiSiteSite extends Struct.CollectionTypeSchema {
     footer: Schema.Attribute.Relation<'oneToOne', 'api::footer.footer'>;
     github_branch: Schema.Attribute.String & Schema.Attribute.DefaultTo<'main'>;
     github_repo: Schema.Attribute.String;
+    keyword_clusters: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::keyword-cluster.keyword-cluster'
+    >;
     locale: Schema.Attribute.String & Schema.Attribute.Private;
     localizations: Schema.Attribute.Relation<'oneToMany', 'api::site.site'> &
       Schema.Attribute.Private;
@@ -1745,6 +1861,7 @@ declare module '@strapi/strapi' {
       'api::category.category': ApiCategoryCategory;
       'api::footer.footer': ApiFooterFooter;
       'api::global.global': ApiGlobalGlobal;
+      'api::keyword-cluster.keyword-cluster': ApiKeywordClusterKeywordCluster;
       'api::lead.lead': ApiLeadLead;
       'api::menu-item.menu-item': ApiMenuItemMenuItem;
       'api::menu.menu': ApiMenuMenu;

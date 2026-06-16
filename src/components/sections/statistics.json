@@ -1,0 +1,43 @@
+{
+  "collectionName": "components_sections_statistics",
+  "info": {
+    "name": "Statistics",
+    "displayName": "Statistics",
+    "icon": "chart-bar",
+    "description": "Data statistics / counter block for credibility and SEO"
+  },
+  "options": {},
+  "attributes": {
+    "title": {
+      "type": "string"
+    },
+    "description": {
+      "type": "text"
+    },
+    "items": {
+      "type": "component",
+      "repeatable": true,
+      "component": "elements.statistic-item",
+      "required": true
+    },
+    "layout": {
+      "type": "enumeration",
+      "enum": ["grid", "inline", "carousel"],
+      "default": "grid"
+    },
+    "columns": {
+      "type": "integer",
+      "default": 4,
+      "min": 2,
+      "max": 6
+    },
+    "animate_counters": {
+      "type": "boolean",
+      "default": true
+    },
+    "show_source": {
+      "type": "boolean",
+      "default": false
+    }
+  }
+}

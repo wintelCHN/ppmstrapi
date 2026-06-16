@@ -66,7 +66,12 @@
         "sections.large-video",
         "sections.rich-text",
         "sections.pricing",
-        "sections.lead-form"
+        "sections.lead-form",
+        "sections.faq-group",
+        "sections.comparison-table",
+        "sections.statistics",
+        "sections.cta-banner",
+        "shared.related-products"
       ],
       "pluginOptions": {
         "i18n": {
@@ -78,6 +83,12 @@
       "type": "relation",
       "relation": "manyToOne",
       "target": "api::site.site",
+      "inversedBy": "pages"
+    },
+    "keyword_cluster": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::keyword-cluster.keyword-cluster",
       "inversedBy": "pages"
     }
   }

@@ -1,0 +1,32 @@
+{
+  "collectionName": "components_elements_comparison_columns",
+  "info": {
+    "name": "Comparison Column",
+    "displayName": "Comparison Column",
+    "icon": "column",
+    "description": "A single column in a comparison table (e.g. a product or feature set)"
+  },
+  "options": {},
+  "attributes": {
+    "header": {
+      "type": "string",
+      "required": true
+    },
+    "sub_header": {
+      "type": "string"
+    },
+    "image": {
+      "allowedTypes": ["images"],
+      "type": "media",
+      "multiple": false
+    },
+    "is_featured": {
+      "type": "boolean",
+      "default": false
+    },
+    "sort_order": {
+      "type": "integer",
+      "default": 0
+    }
+  }
+}

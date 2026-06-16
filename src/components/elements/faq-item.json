@@ -1,0 +1,26 @@
+{
+  "collectionName": "components_elements_faq_items",
+  "info": {
+    "name": "FAQ Item",
+    "displayName": "FAQ Item",
+    "icon": "question",
+    "description": "A single FAQ question-answer pair for manual FAQ blocks"
+  },
+  "options": {},
+  "attributes": {
+    "question": {
+      "type": "string",
+      "required": true
+    },
+    "answer": {
+      "type": "blocks"
+    },
+    "answer_summary": {
+      "type": "text"
+    },
+    "sort_order": {
+      "type": "integer",
+      "default": 0
+    }
+  }
+}

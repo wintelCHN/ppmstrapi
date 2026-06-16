@@ -1,0 +1,52 @@
+{
+  "collectionName": "components_sections_comparison_tables",
+  "info": {
+    "name": "Comparison Table",
+    "displayName": "Comparison Table",
+    "icon": "table",
+    "description": "Product or feature comparison table for SEO/GEO pages"
+  },
+  "options": {},
+  "attributes": {
+    "title": {
+      "type": "string"
+    },
+    "description": {
+      "type": "text"
+    },
+    "mode": {
+      "type": "enumeration",
+      "enum": ["manual", "products", "features"],
+      "default": "products",
+      "required": true
+    },
+    "compared_products": {
+      "type": "relation",
+      "relation": "manyToMany",
+      "target": "api::product.product"
+    },
+    "columns": {
+      "type": "component",
+      "repeatable": true,
+      "component": "elements.comparison-column"
+    },
+    "rows": {
+      "type": "component",
+      "repeatable": true,
+      "component": "elements.comparison-row"
+    },
+    "highlight_column": {
+      "type": "integer",
+      "default": 0,
+      "min": 0
+    },
+    "enable_sorting": {
+      "type": "boolean",
+      "default": false
+    },
+    "cta_label": {
+      "type": "string",
+      "default": "Compare"
+    }
+  }
+}

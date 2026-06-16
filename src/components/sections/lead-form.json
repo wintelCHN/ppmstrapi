@@ -2,25 +2,37 @@
   "collectionName": "components_sections_lead_forms",
   "info": {
     "name": "Lead form",
-    "displayName": "Lead form",
-    "icon": "at",
-    "description": ""
+    "displayName": "Lead Form (Lead Center)",
+    "icon": "envelop",
+    "description": "Contact/inquiry form that submits to Lead Center. Configure appearance here; Astro frontend renders the form and POSTs to /api/public/lead."
   },
   "options": {},
   "attributes": {
     "title": {
-      "type": "string"
+      "type": "string",
+      "required": true,
+      "default": "Get in Touch"
     },
-    "emailPlaceholder": {
-      "type": "string"
+    "description": {
+      "type": "text"
     },
-    "submitButton": {
-      "type": "component",
-      "repeatable": false,
-      "component": "links.button"
+    "formType": {
+      "type": "enumeration",
+      "enum": [
+        "quick",
+        "rfq",
+        "contact"
+      ],
+      "default": "quick",
+      "required": true
     },
-    "location": {
-      "type": "string"
+    "successMessage": {
+      "type": "text",
+      "default": "Thank you! Your inquiry has been submitted. We'll get back to you soon."
+    },
+    "submitButtonText": {
+      "type": "string",
+      "default": "Submit Inquiry"
     }
   }
 }

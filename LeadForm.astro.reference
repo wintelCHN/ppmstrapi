@@ -1,7 +1,59 @@
 ---
 // LeadForm.astro — Reusable B2B lead form for Astro frontend sites
 //
-// Usage:
+// ============================================================================
+// 🔗 Strapi Integration (how the CMS connects to this component)
+// ============================================================================
+//
+// In Strapi Admin → Page editor, drag "Lead Form (Lead Center)" into the
+// dynamic zone. The component stores these fields (via sections.lead-form):
+//
+//   title            — Form heading (e.g. "Get in Touch")
+//   description      — Optional subheading text
+//   formType         — "quick" | "rfq" | "contact"  (which fields to show)
+//   successMessage   — Text shown after successful submission
+//   submitButtonText — Button label (default: "Submit Inquiry")
+//
+// The Astro frontend fetches Page data from Strapi API and renders the form.
+// The form POSTs to POST /api/public/lead on the Strapi backend.
+//
+// ============================================================================
+// 📦 Rendering from Strapi Page API (recommended pattern)
+// ============================================================================
+//
+// In your Astro [slug].astro page, map dynamic zone components:
+//
+//   ---
+//   const { data: page } = await fetch(
+//     `${STRAPI_URL}/api/pages?filters[slug][$eq]=${slug}&populate=deep`
+//   ).then(r => r.json())
+//
+//   const strapiData = page[0]
+//   ---
+//
+//   <Layout>
+//     {strapiData.contentSections.map(section => {
+//       if (section.__component === 'sections.lead-form') {
+//         return (
+//           <LeadForm
+//             type={section.formType}
+//             siteId={site.slug}
+//             siteDomain={site.primary_domain}
+//             title={section.title}
+//             description={section.description}
+//             successMessage={section.successMessage}
+//             submitButtonText={section.submitButtonText}
+//           />
+//         )
+//       }
+//       // ... other component mappings
+//     })}
+//   </Layout>
+//
+// ============================================================================
+// 🚀 Direct usage (without Strapi Page dynamic zone)
+// ============================================================================
+//
 //   <LeadForm type="quick" siteId="my-site" siteDomain="mysite.com" />
 //   <LeadForm type="rfq" siteId="my-site" siteDomain="mysite.com" product="Widget X" />
 //   <LeadForm type="contact" siteId="my-site" siteDomain="mysite.com" />
@@ -12,12 +64,16 @@
 //   contact — Name, Email, Phone, Company, Message
 //
 // Props:
-//   type        — "quick" | "rfq" | "contact" (default: "quick")
-//   siteId      — Site slug from Strapi (required)
-//   siteDomain  — Production domain (required)
-//   product     — Pre-fill product interest (optional)
-//   className   — Additional CSS class on <form> (optional)
-//   successUrl  — Redirect URL on success (optional, default: current page with ?lead=ok)
+//   type             — "quick" | "rfq" | "contact" (default: "quick")
+//   siteId           — Site slug from Strapi (required)
+//   siteDomain       — Production domain (required)
+//   title            — Form heading (optional, default: "Get in Touch")
+//   description      — Subtitle text (optional)
+//   successMessage   — Custom success text (optional)
+//   submitButtonText — Button label (optional, default: "Submit Inquiry")
+//   product          — Pre-fill product interest (optional)
+//   className        — Additional CSS class on <form> (optional)
+//   successUrl       — Redirect URL on success (optional, default: current page with ?lead=ok)
 //
 // Env required: PUBLIC_STRAPI_URL (e.g. http://localhost:1339)
 
@@ -25,6 +81,10 @@ interface Props {
   type?: 'quick' | 'rfq' | 'contact'
   siteId: string
   siteDomain: string
+  title?: string
+  description?: string
+  successMessage?: string
+  submitButtonText?: string
   product?: string
   className?: string
   successUrl?: string
@@ -34,6 +94,10 @@ const {
   type = 'quick',
   siteId,
   siteDomain,
+  title = 'Get in Touch',
+  description = '',
+  successMessage = "Thank you! Your inquiry has been submitted. We'll get back to you soon.",
+  submitButtonText = 'Submit Inquiry',
   product = '',
   className = '',
   successUrl = '',
@@ -55,6 +119,9 @@ const showQuantity = type === 'rfq'
   class={`lead-form lead-form--${type} ${className}`}
   id="lead-form"
 >
+  {title && <h2 class="lead-form__title">{title}</h2>}
+  {description && <p class="lead-form__description">{description}</p>}
+
   <!-- Honeypot (hidden from humans, bots fill it) -->
   <input
     name="website"
@@ -171,7 +238,7 @@ const showQuantity = type === 'rfq'
 
   <div class="lead-form__actions">
     <button type="submit" class="lead-form__submit" id="lead-submit-btn">
-      Submit Inquiry
+      {submitButtonText}
     </button>
   </div>
 
@@ -214,6 +281,8 @@ const showQuantity = type === 'rfq'
   form?.addEventListener('submit', async (e) => {
     e.preventDefault()
 
+    const btnText = submitBtn?.textContent ?? 'Submit Inquiry'
+
     if (submitBtn) {
       submitBtn.disabled = true
       submitBtn.textContent = 'Sending...'
@@ -237,7 +306,7 @@ const showQuantity = type === 'rfq'
         if (msgBox) {
           msgBox.hidden = false
           msgBox.className = 'lead-form__message lead-form__message--success'
-          msgBox.textContent = 'Thank you! Your inquiry has been submitted.'
+          msgBox.textContent = result.message ?? '{{ successMessage }}'
         }
         form.reset()
         const redirect = '{{ successUrl }}'
@@ -264,7 +333,7 @@ const showQuantity = type === 'rfq'
     } finally {
       if (submitBtn) {
         submitBtn.disabled = false
-        submitBtn.textContent = 'Submit Inquiry'
+        submitBtn.textContent = btnText
       }
     }
   })
@@ -274,6 +343,20 @@ const showQuantity = type === 'rfq'
   .lead-form {
     max-width: 600px;
     margin: 0 auto;
+  }
+
+  .lead-form__title {
+    margin: 0 0 0.5rem;
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--color-text, #1a1a1a);
+  }
+
+  .lead-form__description {
+    margin: 0 0 1.5rem;
+    font-size: 0.9375rem;
+    color: var(--color-text-muted, #666);
+    line-height: 1.5;
   }
 
   .lead-form__fields {

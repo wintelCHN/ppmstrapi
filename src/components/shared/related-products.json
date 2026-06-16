@@ -1,0 +1,54 @@
+{
+  "collectionName": "components_shared_related_products",
+  "info": {
+    "name": "Related products",
+    "displayName": "Related Products",
+    "icon": "shopping-cart",
+    "description": "Display related products via manual selection, category, tags, or hybrid mode."
+  },
+  "options": {},
+  "attributes": {
+    "title": {
+      "type": "string",
+      "default": "Related Products"
+    },
+    "mode": {
+      "type": "enumeration",
+      "enum": ["manual", "category", "tag", "hybrid"],
+      "default": "manual",
+      "required": true
+    },
+    "manual_products": {
+      "type": "relation",
+      "relation": "manyToMany",
+      "target": "api::product.product"
+    },
+    "category_filter": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::category.category"
+    },
+    "tag_filters": {
+      "type": "json"
+    },
+    "limit": {
+      "type": "integer",
+      "default": 6,
+      "min": 1,
+      "max": 20
+    },
+    "sort_by": {
+      "type": "enumeration",
+      "enum": ["featured", "newest", "alphabetical", "manual_priority"],
+      "default": "featured"
+    },
+    "show_description": {
+      "type": "boolean",
+      "default": true
+    },
+    "show_cta": {
+      "type": "boolean",
+      "default": true
+    }
+  }
+}
