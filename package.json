@@ -6,7 +6,8 @@
     "start": "strapi start",
     "build": "strapi build",
     "strapi": "strapi",
-    "deploy": "strapi deploy"
+    "deploy": "strapi deploy",
+    "postinstall": "node scripts/setup-translate-provider.js"
   },
   "dependencies": {
     "@strapi/plugin-graphql": "^5.0.0",
@@ -18,6 +19,7 @@
     "react": "^18.0.0",
     "react-dom": "^18.0.0",
     "react-router-dom": "^6.30.3",
+    "strapi-plugin-translate": "^2.0.0-next.4",
     "styled-components": "6.4.1"
   }
 }
