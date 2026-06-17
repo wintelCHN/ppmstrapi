@@ -66,6 +66,8 @@ export default {
           default: mod.CategoryTreePage,
         })),
     });
+
+    // Custom field registrations (if any) go here
   },
 
   bootstrap(app: StrapiApp) {

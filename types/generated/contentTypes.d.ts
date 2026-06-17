@@ -1002,7 +1002,7 @@ export interface ApiProductProduct extends Struct.CollectionTypeSchema {
     images: Schema.Attribute.Media<'images', true> &
       Schema.Attribute.SetPluginOptions<{
         i18n: {
-          localized: true;
+          localized: false;
         };
       }>;
     locale: Schema.Attribute.String;
@@ -1021,7 +1021,14 @@ export interface ApiProductProduct extends Struct.CollectionTypeSchema {
         i18n: {
           localized: false;
         };
-      }>;
+      }> &
+      Schema.Attribute.SetMinMax<
+        {
+          min: 1;
+        },
+        number
+      > &
+      Schema.Attribute.DefaultTo<100>;
     name: Schema.Attribute.String &
       Schema.Attribute.Required &
       Schema.Attribute.SetPluginOptions<{
@@ -1054,21 +1061,40 @@ export interface ApiProductProduct extends Struct.CollectionTypeSchema {
           localized: true;
         };
       }>;
+    short_description: Schema.Attribute.Blocks &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    site: Schema.Attribute.Relation<'manyToOne', 'api::site.site'>;
     sku: Schema.Attribute.String &
-      Schema.Attribute.Required &
+      Schema.Attribute.Unique &
+      Schema.Attribute.SetPluginOptions<{
+        'content-manager': {
+          visible: false;
+        };
+        i18n: {
+          localized: false;
+        };
+      }>;
+    slug: Schema.Attribute.String &
       Schema.Attribute.SetPluginOptions<{
         i18n: {
           localized: false;
         };
       }>;
-    slug: Schema.Attribute.UID<'name'> &
+    Specification: Schema.Attribute.Blocks &
       Schema.Attribute.SetPluginOptions<{
         i18n: {
-          localized: false;
+          localized: true;
         };
       }>;
     status: Schema.Attribute.Enumeration<['draft', 'published', 'archived']> &
       Schema.Attribute.SetPluginOptions<{
+        'content-manager': {
+          visible: false;
+        };
         i18n: {
           localized: false;
         };
@@ -1086,7 +1112,7 @@ export interface ApiProductProduct extends Struct.CollectionTypeSchema {
     videos: Schema.Attribute.Media<'videos', true> &
       Schema.Attribute.SetPluginOptions<{
         i18n: {
-          localized: true;
+          localized: false;
         };
       }>;
   };
@@ -1201,6 +1227,7 @@ export interface ApiSiteSite extends Struct.CollectionTypeSchema {
     preview_url: Schema.Attribute.String;
     primary_domain: Schema.Attribute.String;
     production_url: Schema.Attribute.String;
+    products: Schema.Attribute.Relation<'oneToMany', 'api::product.product'>;
     publishedAt: Schema.Attribute.DateTime;
     secondary_domains: Schema.Attribute.JSON;
     seo_default_description: Schema.Attribute.Text;

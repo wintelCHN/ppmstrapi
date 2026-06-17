@@ -17,6 +17,12 @@ const config = ({ env }: Core.Config.Shared.ConfigParams): Core.Config.Admin => 
     promoteEE: env.bool('FLAG_PROMOTE_EE', true),
     docLinks: env.bool('FLAG_DOC_LINKS', true),
   },
+  watchIgnoreFiles: [
+    '**/astro_site/**',
+    '**/dist/**',
+    '**/node_modules/**',
+    '**/.git/**',
+  ],
 });
 
 export default config;

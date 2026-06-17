@@ -111,6 +111,12 @@
       "relation": "oneToMany",
       "target": "api::keyword-cluster.keyword-cluster",
       "mappedBy": "site"
+    },
+    "products": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::product.product",
+      "mappedBy": "site"
     }
   }
 }

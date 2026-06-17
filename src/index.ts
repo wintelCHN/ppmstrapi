@@ -8,7 +8,9 @@ export default {
    *
    * This gives you an opportunity to extend code.
    */
-  register(/* { strapi }: { strapi: Core.Strapi } */) {},
+  register({ strapi }: { strapi: any }) {
+    // Custom field registrations (if any) go here
+  },
 
   /**
    * An asynchronous bootstrap function that runs before
