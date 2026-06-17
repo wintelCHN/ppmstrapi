@@ -1,0 +1,32 @@
+{
+  "collectionName": "components_layout_site_headers",
+  "info": {
+    "name": "SiteHeader",
+    "displayName": "Site Header",
+    "icon": "grip-horizontal",
+    "description": "Header configuration: logo, layout style, sticky behavior"
+  },
+  "options": {},
+  "attributes": {
+    "logo": {
+      "allowedTypes": ["images"],
+      "type": "media",
+      "multiple": false,
+      "required": true
+    },
+    "logo_dark": {
+      "allowedTypes": ["images"],
+      "type": "media",
+      "multiple": false
+    },
+    "layout": {
+      "type": "enumeration",
+      "enum": ["default", "centered", "transparent", "minimal"],
+      "default": "default"
+    },
+    "sticky": {
+      "type": "boolean",
+      "default": true
+    }
+  }
+}

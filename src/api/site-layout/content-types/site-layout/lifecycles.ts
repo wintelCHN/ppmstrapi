@@ -1,7 +1,7 @@
 /**
- * Menu lifecycle hooks.
+ * SiteLayout lifecycle hooks.
  *
- * - beforeCreate: enforces one-to-one with Site (no duplicate menus per site).
+ * - beforeCreate: enforces one-to-one with Site (no duplicate layouts per site).
  * - afterUpdate: logs build webhook from the associated Site.
  */
 
@@ -13,7 +13,7 @@ export default {
     if (!siteDocumentId) return
 
     const existing = await strapi
-      .documents('api::menu.menu')
+      .documents('api::site-layout.site-layout')
       .findFirst({
         filters: {
           site: { documentId: siteDocumentId },
@@ -21,14 +21,14 @@ export default {
       })
 
     if (existing) {
-      throw new Error('Each Site can only have one Menu.')
+      throw new Error('Each Site can only have one SiteLayout.')
     }
   },
 
   async afterUpdate(event: any) {
     const documentId = event?.params?.documentId
     if (documentId) {
-      await logBuildWebhook(strapi, 'api::menu.menu', documentId)
+      await logBuildWebhook(strapi, 'api::site-layout.site-layout', documentId)
     }
   },
 }

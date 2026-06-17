@@ -595,68 +595,6 @@ export interface ApiCategoryCategory extends Struct.CollectionTypeSchema {
   };
 }
 
-export interface ApiFooterFooter extends Struct.CollectionTypeSchema {
-  collectionName: 'footers';
-  info: {
-    description: 'Per-site footer configuration (one-to-one with Site)';
-    displayName: 'Footer';
-    name: 'footer';
-    pluralName: 'footers';
-    singularName: 'footer';
-  };
-  options: {
-    draftAndPublish: true;
-  };
-  pluginOptions: {
-    i18n: {
-      localized: true;
-    };
-  };
-  attributes: {
-    bottom_links: Schema.Attribute.Component<'links.link', true> &
-      Schema.Attribute.SetPluginOptions<{
-        i18n: {
-          localized: true;
-        };
-      }>;
-    bottom_text: Schema.Attribute.Text &
-      Schema.Attribute.SetPluginOptions<{
-        i18n: {
-          localized: true;
-        };
-      }>;
-    columns: Schema.Attribute.Component<'elements.footer-section', true> &
-      Schema.Attribute.SetPluginOptions<{
-        i18n: {
-          localized: true;
-        };
-      }>;
-    createdAt: Schema.Attribute.DateTime;
-    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
-      Schema.Attribute.Private;
-    description: Schema.Attribute.Text &
-      Schema.Attribute.SetPluginOptions<{
-        i18n: {
-          localized: true;
-        };
-      }>;
-    locale: Schema.Attribute.String;
-    localizations: Schema.Attribute.Relation<'oneToMany', 'api::footer.footer'>;
-    logo: Schema.Attribute.Media<'images'>;
-    publishedAt: Schema.Attribute.DateTime;
-    site: Schema.Attribute.Relation<'oneToOne', 'api::site.site'>;
-    social_links: Schema.Attribute.JSON &
-      Schema.Attribute.SetPluginOptions<{
-        i18n: {
-          localized: false;
-        };
-      }>;
-    updatedAt: Schema.Attribute.DateTime;
-    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
-      Schema.Attribute.Private;
-  };
-}
-
 export interface ApiGlobalGlobal extends Struct.SingleTypeSchema {
   collectionName: 'globals';
   info: {
@@ -677,18 +615,6 @@ export interface ApiGlobalGlobal extends Struct.SingleTypeSchema {
     createdAt: Schema.Attribute.DateTime;
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
-    favicon: Schema.Attribute.Media<'images'> &
-      Schema.Attribute.SetPluginOptions<{
-        i18n: {
-          localized: true;
-        };
-      }>;
-    footer: Schema.Attribute.Component<'layout.footer', false> &
-      Schema.Attribute.SetPluginOptions<{
-        i18n: {
-          localized: true;
-        };
-      }>;
     locale: Schema.Attribute.String;
     localizations: Schema.Attribute.Relation<'oneToMany', 'api::global.global'>;
     metadata: Schema.Attribute.Component<'meta.metadata', false> &
@@ -704,22 +630,14 @@ export interface ApiGlobalGlobal extends Struct.SingleTypeSchema {
           localized: true;
         };
       }>;
-    navbar: Schema.Attribute.Component<'layout.navbar', false> &
-      Schema.Attribute.SetPluginOptions<{
-        i18n: {
-          localized: true;
-        };
-      }>;
-    notificationBanner: Schema.Attribute.Component<
-      'elements.notification-banner',
-      false
-    > &
-      Schema.Attribute.SetPluginOptions<{
-        i18n: {
-          localized: true;
-        };
-      }>;
     publishedAt: Schema.Attribute.DateTime;
+    siteName: Schema.Attribute.String &
+      Schema.Attribute.Required &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
@@ -871,120 +789,6 @@ export interface ApiLeadLead extends Struct.CollectionTypeSchema {
     utm_source: Schema.Attribute.String;
     utm_term: Schema.Attribute.String;
     whatsapp: Schema.Attribute.String;
-  };
-}
-
-export interface ApiMenuItemMenuItem extends Struct.CollectionTypeSchema {
-  collectionName: 'menu_items';
-  info: {
-    description: 'Individual navigation item within a site Menu. References Category, Page, or custom URL.';
-    displayName: 'Menu Item';
-    name: 'menu-item';
-    pluralName: 'menu-items';
-    singularName: 'menu-item';
-  };
-  options: {
-    draftAndPublish: true;
-  };
-  pluginOptions: {
-    i18n: {
-      localized: true;
-    };
-  };
-  attributes: {
-    category: Schema.Attribute.Relation<'manyToOne', 'api::category.category'>;
-    createdAt: Schema.Attribute.DateTime;
-    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
-      Schema.Attribute.Private;
-    display_mode: Schema.Attribute.Enumeration<['inline', 'dropdown']> &
-      Schema.Attribute.SetPluginOptions<{
-        i18n: {
-          localized: false;
-        };
-      }> &
-      Schema.Attribute.DefaultTo<'inline'>;
-    link_type: Schema.Attribute.Enumeration<['category', 'page', 'custom']> &
-      Schema.Attribute.SetPluginOptions<{
-        i18n: {
-          localized: false;
-        };
-      }> &
-      Schema.Attribute.DefaultTo<'custom'>;
-    locale: Schema.Attribute.String;
-    localizations: Schema.Attribute.Relation<
-      'oneToMany',
-      'api::menu-item.menu-item'
-    >;
-    menu: Schema.Attribute.Relation<'manyToOne', 'api::menu.menu'>;
-    open_new_tab: Schema.Attribute.Boolean &
-      Schema.Attribute.SetPluginOptions<{
-        i18n: {
-          localized: false;
-        };
-      }> &
-      Schema.Attribute.DefaultTo<false>;
-    order: Schema.Attribute.Integer &
-      Schema.Attribute.SetPluginOptions<{
-        i18n: {
-          localized: false;
-        };
-      }> &
-      Schema.Attribute.DefaultTo<0>;
-    page: Schema.Attribute.Relation<'manyToOne', 'api::page.page'>;
-    publishedAt: Schema.Attribute.DateTime;
-    title: Schema.Attribute.String &
-      Schema.Attribute.SetPluginOptions<{
-        i18n: {
-          localized: true;
-        };
-      }>;
-    updatedAt: Schema.Attribute.DateTime;
-    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
-      Schema.Attribute.Private;
-    url: Schema.Attribute.String &
-      Schema.Attribute.SetPluginOptions<{
-        i18n: {
-          localized: false;
-        };
-      }>;
-  };
-}
-
-export interface ApiMenuMenu extends Struct.CollectionTypeSchema {
-  collectionName: 'menus';
-  info: {
-    description: 'Per-site navigation menu container (one-to-one with Site). Items are managed via Menu Item collection.';
-    displayName: 'Menu';
-    name: 'menu';
-    pluralName: 'menus';
-    singularName: 'menu';
-  };
-  options: {
-    draftAndPublish: true;
-  };
-  pluginOptions: {
-    i18n: {
-      localized: true;
-    };
-  };
-  attributes: {
-    createdAt: Schema.Attribute.DateTime;
-    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
-      Schema.Attribute.Private;
-    items: Schema.Attribute.Relation<'oneToMany', 'api::menu-item.menu-item'>;
-    locale: Schema.Attribute.String;
-    localizations: Schema.Attribute.Relation<'oneToMany', 'api::menu.menu'>;
-    publishedAt: Schema.Attribute.DateTime;
-    site: Schema.Attribute.Relation<'oneToOne', 'api::site.site'>;
-    title: Schema.Attribute.String &
-      Schema.Attribute.SetPluginOptions<{
-        i18n: {
-          localized: true;
-        };
-      }>;
-    updatedAt: Schema.Attribute.DateTime;
-    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
-      Schema.Attribute.Private;
   };
 }
 
@@ -1288,6 +1092,73 @@ export interface ApiProductProduct extends Struct.CollectionTypeSchema {
   };
 }
 
+export interface ApiSiteLayoutSiteLayout extends Struct.CollectionTypeSchema {
+  collectionName: 'site_layouts';
+  info: {
+    description: 'Unified per-site layout: header, navigation, favicon, notification banner, footer (one-to-one with Site)';
+    displayName: 'Site Layout';
+    name: 'site-layout';
+    pluralName: 'site-layouts';
+    singularName: 'site-layout';
+  };
+  options: {
+    draftAndPublish: false;
+  };
+  pluginOptions: {
+    i18n: {
+      localized: true;
+    };
+  };
+  attributes: {
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    favicon: Schema.Attribute.Media<'images'> &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    footer: Schema.Attribute.Component<'layout.site-footer', false> &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    header: Schema.Attribute.Component<'layout.site-header', false> &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    locale: Schema.Attribute.String;
+    localizations: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::site-layout.site-layout'
+    >;
+    navigation: Schema.Attribute.Component<'layout.nav-item', true> &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    notification_banner: Schema.Attribute.Component<
+      'elements.notification-banner',
+      false
+    > &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    publishedAt: Schema.Attribute.DateTime;
+    site: Schema.Attribute.Relation<'oneToOne', 'api::site.site'>;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+  };
+}
+
 export interface ApiSiteSite extends Struct.CollectionTypeSchema {
   collectionName: 'sites';
   info: {
@@ -1315,7 +1186,6 @@ export interface ApiSiteSite extends Struct.CollectionTypeSchema {
       ['vercel', 'cloudflare-pages', 'netlify']
     >;
     description: Schema.Attribute.Text;
-    footer: Schema.Attribute.Relation<'oneToOne', 'api::footer.footer'>;
     github_branch: Schema.Attribute.String & Schema.Attribute.DefaultTo<'main'>;
     github_repo: Schema.Attribute.String;
     keyword_clusters: Schema.Attribute.Relation<
@@ -1325,8 +1195,6 @@ export interface ApiSiteSite extends Struct.CollectionTypeSchema {
     locale: Schema.Attribute.String & Schema.Attribute.Private;
     localizations: Schema.Attribute.Relation<'oneToMany', 'api::site.site'> &
       Schema.Attribute.Private;
-    menu: Schema.Attribute.Relation<'oneToOne', 'api::menu.menu'>;
-    name: Schema.Attribute.String & Schema.Attribute.Required;
     news_articles: Schema.Attribute.Relation<'oneToMany', 'api::news.news'>;
     notes: Schema.Attribute.Blocks;
     pages: Schema.Attribute.Relation<'oneToMany', 'api::page.page'>;
@@ -1338,7 +1206,12 @@ export interface ApiSiteSite extends Struct.CollectionTypeSchema {
     seo_default_description: Schema.Attribute.Text;
     seo_default_keywords: Schema.Attribute.Text;
     seo_default_title: Schema.Attribute.String;
-    slug: Schema.Attribute.UID<'name'>;
+    site_layout: Schema.Attribute.Relation<
+      'oneToOne',
+      'api::site-layout.site-layout'
+    >;
+    site_name: Schema.Attribute.String & Schema.Attribute.Required;
+    slug: Schema.Attribute.UID;
     status: Schema.Attribute.Enumeration<['active', 'inactive', 'development']>;
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
@@ -1859,15 +1732,13 @@ declare module '@strapi/strapi' {
       'admin::user': AdminUser;
       'api::blog.blog': ApiBlogBlog;
       'api::category.category': ApiCategoryCategory;
-      'api::footer.footer': ApiFooterFooter;
       'api::global.global': ApiGlobalGlobal;
       'api::keyword-cluster.keyword-cluster': ApiKeywordClusterKeywordCluster;
       'api::lead.lead': ApiLeadLead;
-      'api::menu-item.menu-item': ApiMenuItemMenuItem;
-      'api::menu.menu': ApiMenuMenu;
       'api::news.news': ApiNewsNews;
       'api::page.page': ApiPagePage;
       'api::product.product': ApiProductProduct;
+      'api::site-layout.site-layout': ApiSiteLayoutSiteLayout;
       'api::site.site': ApiSiteSite;
       'plugin::content-releases.release': PluginContentReleasesRelease;
       'plugin::content-releases.release-action': PluginContentReleasesReleaseAction;

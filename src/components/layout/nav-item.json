@@ -1,0 +1,48 @@
+{
+  "collectionName": "components_layout_nav_items",
+  "info": {
+    "name": "NavItem",
+    "displayName": "Navigation Item",
+    "icon": "arrow-right",
+    "description": "Navigation menu item with link type, display mode, and optional children"
+  },
+  "options": {},
+  "attributes": {
+    "title": {
+      "type": "string",
+      "required": true
+    },
+    "link_type": {
+      "type": "enumeration",
+      "enum": ["category", "page", "custom"],
+      "default": "custom"
+    },
+    "category": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::category.category"
+    },
+    "page": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::page.page"
+    },
+    "custom_url": {
+      "type": "string"
+    },
+    "display_mode": {
+      "type": "enumeration",
+      "enum": ["inline", "dropdown", "cta"],
+      "default": "inline"
+    },
+    "open_new_tab": {
+      "type": "boolean",
+      "default": false
+    },
+    "children": {
+      "type": "component",
+      "repeatable": true,
+      "component": "layout.nav-sub-item"
+    }
+  }
+}

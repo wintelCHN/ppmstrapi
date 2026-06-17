@@ -18,6 +18,7 @@ if (!Array.prototype.toSpliced) {
 }
 
 import type { StrapiApp } from '@strapi/strapi/admin';
+import { Folder } from '@strapi/icons';
 
 export default {
   config: {
@@ -50,6 +51,23 @@ export default {
       // 'zh',
     ],
   },
+
+  register(app: StrapiApp) {
+    app.addMenuLink({
+      to: 'categories',
+      icon: Folder,
+      intlLabel: {
+        id: 'global.categories',
+        defaultMessage: 'Categories',
+      },
+      permissions: [],
+      Component: () =>
+        import('./pages/CategoryTree').then((mod) => ({
+          default: mod.CategoryTreePage,
+        })),
+    });
+  },
+
   bootstrap(app: StrapiApp) {
     console.log(app);
   },

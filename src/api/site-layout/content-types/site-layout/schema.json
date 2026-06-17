@@ -1,0 +1,79 @@
+{
+  "kind": "collectionType",
+  "collectionName": "site_layouts",
+  "info": {
+    "singularName": "site-layout",
+    "pluralName": "site-layouts",
+    "displayName": "Site Layout",
+    "name": "site-layout",
+    "description": "Unified per-site layout: header, navigation, favicon, notification banner, footer (one-to-one with Site)"
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "pluginOptions": {
+    "i18n": {
+      "localized": true
+    }
+  },
+  "attributes": {
+    "header": {
+      "type": "component",
+      "repeatable": false,
+      "component": "layout.site-header",
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      }
+    },
+    "navigation": {
+      "type": "component",
+      "repeatable": true,
+      "component": "layout.nav-item",
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      }
+    },
+    "favicon": {
+      "type": "media",
+      "multiple": false,
+      "allowedTypes": [
+        "images"
+      ],
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      }
+    },
+    "notification_banner": {
+      "type": "component",
+      "repeatable": false,
+      "component": "elements.notification-banner",
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      }
+    },
+    "footer": {
+      "type": "component",
+      "repeatable": false,
+      "component": "layout.site-footer",
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      }
+    },
+    "site": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "api::site.site",
+      "mappedBy": "site_layout"
+    }
+  }
+}

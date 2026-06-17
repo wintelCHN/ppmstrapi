@@ -46,7 +46,9 @@
     "featured_image": {
       "type": "media",
       "multiple": false,
-      "allowedTypes": ["images"],
+      "allowedTypes": [
+        "images"
+      ],
       "pluginOptions": {
         "i18n": {
           "localized": true
@@ -79,7 +81,10 @@
     },
     "status": {
       "type": "enumeration",
-      "enum": ["draft", "published"],
+      "enum": [
+        "draft",
+        "published"
+      ],
       "default": "draft",
       "pluginOptions": {
         "i18n": {

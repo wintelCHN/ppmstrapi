@@ -185,32 +185,81 @@ export interface ElementsTestimonial extends Struct.ComponentSchema {
   };
 }
 
-export interface LayoutFooter extends Struct.ComponentSchema {
-  collectionName: 'components_layout_footers';
+export interface LayoutNavItem extends Struct.ComponentSchema {
+  collectionName: 'components_layout_nav_items';
   info: {
-    displayName: 'Footer';
-    icon: 'caret-square-down';
-    name: 'Footer';
+    description: 'Navigation menu item with link type, display mode, and optional children';
+    displayName: 'Navigation Item';
+    icon: 'arrow-right';
+    name: 'NavItem';
   };
   attributes: {
-    columns: Schema.Attribute.Component<'elements.footer-section', true>;
-    logo: Schema.Attribute.Media<'images'>;
-    smallText: Schema.Attribute.String;
+    category: Schema.Attribute.Relation<'manyToOne', 'api::category.category'>;
+    children: Schema.Attribute.Component<'layout.nav-sub-item', true>;
+    custom_url: Schema.Attribute.String;
+    display_mode: Schema.Attribute.Enumeration<['inline', 'dropdown', 'cta']> &
+      Schema.Attribute.DefaultTo<'inline'>;
+    link_type: Schema.Attribute.Enumeration<['category', 'page', 'custom']> &
+      Schema.Attribute.DefaultTo<'custom'>;
+    open_new_tab: Schema.Attribute.Boolean & Schema.Attribute.DefaultTo<false>;
+    page: Schema.Attribute.Relation<'manyToOne', 'api::page.page'>;
+    title: Schema.Attribute.String & Schema.Attribute.Required;
   };
 }
 
-export interface LayoutNavbar extends Struct.ComponentSchema {
-  collectionName: 'components_layout_navbars';
+export interface LayoutNavSubItem extends Struct.ComponentSchema {
+  collectionName: 'components_layout_nav_sub_items';
   info: {
-    description: '';
-    displayName: 'Navbar';
-    icon: 'map-signs';
-    name: 'Navbar';
+    description: 'Second-level navigation item (rendered inside a dropdown)';
+    displayName: 'Navigation Sub Item';
+    icon: 'arrow-down';
+    name: 'NavSubItem';
   };
   attributes: {
-    button: Schema.Attribute.Component<'links.button-link', false>;
-    links: Schema.Attribute.Component<'links.link', true>;
+    category: Schema.Attribute.Relation<'manyToOne', 'api::category.category'>;
+    custom_url: Schema.Attribute.String;
+    link_type: Schema.Attribute.Enumeration<['category', 'page', 'custom']> &
+      Schema.Attribute.DefaultTo<'custom'>;
+    open_new_tab: Schema.Attribute.Boolean & Schema.Attribute.DefaultTo<false>;
+    page: Schema.Attribute.Relation<'manyToOne', 'api::page.page'>;
+    title: Schema.Attribute.String & Schema.Attribute.Required;
+  };
+}
+
+export interface LayoutSiteFooter extends Struct.ComponentSchema {
+  collectionName: 'components_layout_site_footers';
+  info: {
+    description: 'Footer configuration: logo, description, columns, bottom links, social links';
+    displayName: 'Site Footer';
+    icon: 'grip-horizontal';
+    name: 'SiteFooter';
+  };
+  attributes: {
+    bottom_links: Schema.Attribute.Component<'links.link', true>;
+    bottom_text: Schema.Attribute.Text;
+    columns: Schema.Attribute.Component<'elements.footer-section', true>;
+    description: Schema.Attribute.Text;
+    logo: Schema.Attribute.Media<'images'>;
+    social_links: Schema.Attribute.JSON;
+  };
+}
+
+export interface LayoutSiteHeader extends Struct.ComponentSchema {
+  collectionName: 'components_layout_site_headers';
+  info: {
+    description: 'Header configuration: logo, layout style, sticky behavior';
+    displayName: 'Site Header';
+    icon: 'grip-horizontal';
+    name: 'SiteHeader';
+  };
+  attributes: {
+    layout: Schema.Attribute.Enumeration<
+      ['default', 'centered', 'transparent', 'minimal']
+    > &
+      Schema.Attribute.DefaultTo<'default'>;
     logo: Schema.Attribute.Media<'images'> & Schema.Attribute.Required;
+    logo_dark: Schema.Attribute.Media<'images'>;
+    sticky: Schema.Attribute.Boolean & Schema.Attribute.DefaultTo<true>;
   };
 }
 
@@ -595,8 +644,10 @@ declare module '@strapi/strapi' {
       'elements.plan': ElementsPlan;
       'elements.statistic-item': ElementsStatisticItem;
       'elements.testimonial': ElementsTestimonial;
-      'layout.footer': LayoutFooter;
-      'layout.navbar': LayoutNavbar;
+      'layout.nav-item': LayoutNavItem;
+      'layout.nav-sub-item': LayoutNavSubItem;
+      'layout.site-footer': LayoutSiteFooter;
+      'layout.site-header': LayoutSiteHeader;
       'links.button': LinksButton;
       'links.button-link': LinksButtonLink;
       'links.link': LinksLink;

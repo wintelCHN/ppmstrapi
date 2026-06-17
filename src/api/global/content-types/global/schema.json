@@ -35,40 +35,9 @@
         }
       }
     },
-    "favicon": {
-      "allowedTypes": ["images"],
-      "type": "media",
-      "multiple": false,
-      "pluginOptions": {
-        "i18n": {
-          "localized": true
-        }
-      }
-    },
-    "notificationBanner": {
-      "type": "component",
-      "repeatable": false,
-      "component": "elements.notification-banner",
-      "pluginOptions": {
-        "i18n": {
-          "localized": true
-        }
-      }
-    },
-    "navbar": {
-      "type": "component",
-      "repeatable": false,
-      "component": "layout.navbar",
-      "pluginOptions": {
-        "i18n": {
-          "localized": true
-        }
-      }
-    },
-    "footer": {
-      "type": "component",
-      "repeatable": false,
-      "component": "layout.footer",
+    "siteName": {
+      "type": "string",
+      "required": true,
       "pluginOptions": {
         "i18n": {
           "localized": true

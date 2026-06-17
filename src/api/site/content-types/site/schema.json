@@ -11,21 +11,31 @@
   "options": {
     "draftAndPublish": true
   },
+  "pluginOptions": {},
   "attributes": {
-    "name": {
+    "site_name": {
       "type": "string",
       "required": true
     },
     "slug": {
-      "type": "uid",
-      "targetField": "name"
+      "type": "uid"
+    },
+    "site_layout": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "api::site-layout.site-layout",
+      "inversedBy": "site"
     },
     "description": {
       "type": "text"
     },
     "status": {
       "type": "enumeration",
-      "enum": ["active", "inactive", "development"]
+      "enum": [
+        "active",
+        "inactive",
+        "development"
+      ]
     },
     "primary_domain": {
       "type": "string"
@@ -35,7 +45,11 @@
     },
     "deploy_platform": {
       "type": "enumeration",
-      "enum": ["vercel", "cloudflare-pages", "netlify"]
+      "enum": [
+        "vercel",
+        "cloudflare-pages",
+        "netlify"
+      ]
     },
     "github_repo": {
       "type": "string"
@@ -91,18 +105,6 @@
       "relation": "oneToMany",
       "target": "api::page.page",
       "mappedBy": "site"
-    },
-    "menu": {
-      "type": "relation",
-      "relation": "oneToOne",
-      "target": "api::menu.menu",
-      "inversedBy": "site"
-    },
-    "footer": {
-      "type": "relation",
-      "relation": "oneToOne",
-      "target": "api::footer.footer",
-      "inversedBy": "site"
     },
     "keyword_clusters": {
       "type": "relation",

@@ -1,0 +1,38 @@
+{
+  "collectionName": "components_layout_nav_sub_items",
+  "info": {
+    "name": "NavSubItem",
+    "displayName": "Navigation Sub Item",
+    "icon": "arrow-down",
+    "description": "Second-level navigation item (rendered inside a dropdown)"
+  },
+  "options": {},
+  "attributes": {
+    "title": {
+      "type": "string",
+      "required": true
+    },
+    "link_type": {
+      "type": "enumeration",
+      "enum": ["category", "page", "custom"],
+      "default": "custom"
+    },
+    "category": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::category.category"
+    },
+    "page": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::page.page"
+    },
+    "custom_url": {
+      "type": "string"
+    },
+    "open_new_tab": {
+      "type": "boolean",
+      "default": false
+    }
+  }
+}

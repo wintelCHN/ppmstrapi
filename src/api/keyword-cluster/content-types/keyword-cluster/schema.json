@@ -54,7 +54,12 @@
     },
     "search_intent": {
       "type": "enumeration",
-      "enum": ["informational", "commercial", "transactional", "comparison"],
+      "enum": [
+        "informational",
+        "commercial",
+        "transactional",
+        "comparison"
+      ],
       "default": "commercial",
       "pluginOptions": {
         "i18n": {

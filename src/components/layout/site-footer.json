@@ -1,0 +1,36 @@
+{
+  "collectionName": "components_layout_site_footers",
+  "info": {
+    "name": "SiteFooter",
+    "displayName": "Site Footer",
+    "icon": "grip-horizontal",
+    "description": "Footer configuration: logo, description, columns, bottom links, social links"
+  },
+  "options": {},
+  "attributes": {
+    "logo": {
+      "allowedTypes": ["images"],
+      "type": "media",
+      "multiple": false
+    },
+    "description": {
+      "type": "text"
+    },
+    "columns": {
+      "type": "component",
+      "repeatable": true,
+      "component": "elements.footer-section"
+    },
+    "bottom_text": {
+      "type": "text"
+    },
+    "bottom_links": {
+      "type": "component",
+      "repeatable": true,
+      "component": "links.link"
+    },
+    "social_links": {
+      "type": "json"
+    }
+  }
+}
