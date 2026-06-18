@@ -192,10 +192,19 @@
       "default": false
     },
     "tags": {
+      "type": "relation",
+      "relation": "manyToMany",
+      "target": "api::tag.tag",
+      "inversedBy": "products"
+    },
+    "tags_json_deprecated": {
       "type": "json",
       "pluginOptions": {
         "i18n": {
           "localized": false
+        },
+        "content-manager": {
+          "visible": false
         }
       }
     }

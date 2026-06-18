@@ -18,7 +18,7 @@ if (!Array.prototype.toSpliced) {
 }
 
 import type { StrapiApp } from '@strapi/strapi/admin';
-import { Folder } from '@strapi/icons';
+import { Folder, PuzzlePiece, Cog } from '@strapi/icons';
 
 export default {
   config: {
@@ -64,6 +64,34 @@ export default {
       Component: () =>
         import('./pages/CategoryTree').then((mod) => ({
           default: mod.CategoryTreePage,
+        })),
+    });
+
+    // Tags — uses the native Content Manager for list / create / edit
+    app.addMenuLink({
+      to: 'content-manager/collection-types/api::tag.tag',
+      icon: PuzzlePiece,
+      intlLabel: {
+        id: 'global.tags',
+        defaultMessage: 'Tags',
+      },
+      permissions: [
+        { action: 'plugin::content-manager.collection-types.configure-view', subject: null },
+      ],
+    });
+
+    // Tag Tools — batch merge, CSV import/export, statistics
+    app.addMenuLink({
+      to: 'tag-tools',
+      icon: Cog,
+      intlLabel: {
+        id: 'global.tag-tools',
+        defaultMessage: 'Tag Tools',
+      },
+      permissions: [],
+      Component: () =>
+        import('./pages/TagTools').then((mod) => ({
+          default: mod.TagToolsPage,
         })),
     });
 

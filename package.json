@@ -7,7 +7,8 @@
     "build": "strapi build",
     "strapi": "strapi",
     "deploy": "strapi deploy",
-    "postinstall": "node scripts/setup-translate-provider.js"
+    "postinstall": "node scripts/setup-translate-provider.js",
+    "migrate-tags": "node scripts/migrate-tags.js"
   },
   "dependencies": {
     "@strapi/plugin-graphql": "^5.0.0",

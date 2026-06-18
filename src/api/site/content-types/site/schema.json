@@ -117,6 +117,12 @@
       "relation": "oneToMany",
       "target": "api::product.product",
       "mappedBy": "site"
+    },
+    "tags": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::tag.tag",
+      "mappedBy": "site"
     }
   }
 }

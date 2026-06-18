@@ -116,6 +116,62 @@ async function copyLocalizedFromEn(
   }
 }
 
+// ── Tag migration bridge (temporary — removed in cleanup phase) ──────────────
+
+/**
+ * Reads legacy `tags_json_deprecated` JSON string array, finds or creates
+ * corresponding Tag documents, and returns an array of { documentId } objects
+ * suitable for assigning to the new `tags` M:N relation.
+ */
+async function resolveTagsFromLegacy(
+  strapi: any,
+  tagNames: string[],
+  siteDocumentId?: string,
+): Promise<{ documentId: string }[]> {
+  const resolved: { documentId: string }[] = []
+
+  for (const name of tagNames) {
+    if (!name || typeof name !== 'string' || !name.trim()) continue
+    const normalized = name.trim()
+
+    try {
+      // Case-insensitive find — tag name is NOT localized, direct string search
+      const existing: any[] = await strapi.documents('api::tag.tag').findMany({
+        filters: { name: normalized },
+        limit: 1,
+      })
+
+      let tag: any = null
+
+      if (existing.length > 0) {
+        tag = existing[0]
+      } else {
+        tag = await strapi.documents('api::tag.tag').create({
+          data: {
+            name: normalized,
+            tagtype: 'product_type',
+            ...(siteDocumentId ? { site: { documentId: siteDocumentId } } : {}),
+          },
+        })
+        strapi.log.info(
+          `[Product→Tag Migration] Auto-created tag: "${normalized}"`,
+        )
+      }
+
+      if (!resolved.find((r) => r.documentId === tag.documentId)) {
+        resolved.push({ documentId: tag.documentId })
+      }
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err)
+      strapi.log.warn(
+        `[Product→Tag Migration] Failed to resolve tag "${normalized}": ${msg}`,
+      )
+    }
+  }
+
+  return resolved
+}
+
 function isEmpty(value: any): boolean {
   if (value === null || value === undefined || value === '') return true
   if (Array.isArray(value) && value.length === 0) return true
@@ -159,6 +215,21 @@ export default {
 
     // 3. Copy localized fields from EN when adding a new locale (rare edge-case)
     await copyLocalizedFromEn(strapi, data, data.documentId)
+
+    // 4. Tag migration bridge: resolve legacy JSON tags → Tag documents
+    if (Array.isArray(data.tags_json_deprecated) && data.tags_json_deprecated.length > 0) {
+      const siteDocumentId =
+        data.site?.documentId ??
+        (typeof data.site === 'string' ? data.site : undefined)
+      const resolved = await resolveTagsFromLegacy(
+        strapi,
+        data.tags_json_deprecated,
+        siteDocumentId,
+      )
+      if (resolved.length > 0) {
+        data.tags = resolved
+      }
+    }
   },
 
   async beforeUpdate(event: any) {
@@ -189,6 +260,21 @@ export default {
     //     when saving a new locale for an existing document.)
     if (documentId) {
       await copyLocalizedFromEn(strapi, data, documentId)
+    }
+
+    // 3. Tag migration bridge: resolve legacy JSON tags → Tag documents
+    if (Array.isArray(data.tags_json_deprecated) && data.tags_json_deprecated.length > 0) {
+      const siteDocumentId =
+        data.site?.documentId ??
+        (typeof data.site === 'string' ? data.site : undefined)
+      const resolved = await resolveTagsFromLegacy(
+        strapi,
+        data.tags_json_deprecated,
+        siteDocumentId,
+      )
+      if (resolved.length > 0) {
+        data.tags = resolved
+      }
     }
   },
 
