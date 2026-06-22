@@ -27,6 +27,34 @@ const config = ({ env }: Core.Config.Shared.ConfigParams): Core.Config.Plugin =>
       regenerateUids: true,
     },
   },
+  // ── Upload provider ──────────────────────────────────────────────
+  // UPLOAD_PROVIDER=local        → default local filesystem (dev)
+  // UPLOAD_PROVIDER=aws-s3       → Cloudflare R2 via S3-compatible API (prod)
+  upload: {
+    config: {
+      provider: env('UPLOAD_PROVIDER', 'local'),
+      providerOptions:
+        env('UPLOAD_PROVIDER', 'local') === 'aws-s3'
+          ? {
+              s3Options: {
+                credentials: {
+                  accessKeyId: env('R2_ACCESS_KEY_ID', ''),
+                  secretAccessKey: env('R2_SECRET_ACCESS_KEY', ''),
+                },
+                endpoint: env('R2_ENDPOINT', ''),
+                region: env('R2_REGION', 'auto'),
+                params: {
+                  Bucket: env('R2_BUCKET', ''),
+                },
+              },
+              // CDN custom domain → API returns absolute URLs like
+              // https://cdn.productsb2b.com/uploads/xxx.png
+              // Frontend mediaUrl() already passes absolute URLs through.
+              baseUrl: env('R2_CDN_URL', ''),
+            }
+          : {},
+    },
+  },
 });
 
 export default config;

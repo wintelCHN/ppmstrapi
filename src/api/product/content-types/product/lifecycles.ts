@@ -236,6 +236,11 @@ export default {
     const { data, where } = event.params
     const documentId = where?.documentId
 
+    // 0. Sync custom `status` with built-in Draft & Publish (publishedAt)
+    if (Object.prototype.hasOwnProperty.call(data, 'publishedAt')) {
+      data.status = data.publishedAt === null ? 'draft' : 'published'
+    }
+
     // 1. Re-generate slug only if name is explicitly being changed
     if (data.name && documentId) {
       try {

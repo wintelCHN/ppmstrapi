@@ -29,6 +29,7 @@ export async function bootstrap() {
   await setupPublicPermissions()
   await syncProductViewConfig()
   await syncTagViewConfig()
+  await syncPageStatusField()
   await markFirstRun()
 }
 
@@ -165,6 +166,94 @@ async function syncTagViewConfig() {
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : String(err)
     strapi.log.warn(`[Bootstrap] Tag view config sync failed: ${msg}`)
+  }
+}
+
+/**
+ * One-time migration: sync custom `status` field with Strapi 5's built-in
+ * Draft & Publish (`publishedAt`) for all existing documents.
+ *
+ * Page, Blog, News, and Product schemas all have both `draftAndPublish`
+ * (publishedAt) AND a custom `status` enumeration. Before lifecycle hooks
+ * were added, publishing would set `publishedAt` but leave the custom
+ * `status` at its default "draft". This migration fixes existing entries.
+ */
+const STATUS_SYNC_UIDS = [
+  'api::page.page',
+  'api::blog.blog',
+  'api::news.news',
+  'api::product.product',
+] as const
+
+async function syncPageStatusField() {
+  const PLUGIN_KEY = 'syncStatusField_v2'
+
+  try {
+    const pluginStore = strapi.store({
+      environment: strapi.config.environment,
+      type: 'type',
+      name: 'setup',
+    })
+
+    const hasRun = await pluginStore.get({ key: PLUGIN_KEY })
+    if (hasRun) return
+
+    let totalFixed = 0
+
+    for (const uid of STATUS_SYNC_UIDS) {
+      // Fix: publishedAt is set but status is still "draft"
+      const draftButPublished: any[] = await strapi.db
+        .query(uid)
+        .findMany({
+          where: {
+            $and: [
+              { publishedAt: { $notNull: true } },
+              { status: 'draft' },
+            ],
+          },
+        })
+
+      for (const entry of draftButPublished) {
+        await strapi.db.query(uid).update({
+          where: { id: entry.id },
+          data: { status: 'published' },
+        })
+      }
+
+      // Fix: publishedAt is null but status is "published"
+      const publishedButDraft: any[] = await strapi.db
+        .query(uid)
+        .findMany({
+          where: {
+            $and: [
+              { publishedAt: { $null: true } },
+              { status: 'published' },
+            ],
+          },
+        })
+
+      for (const entry of publishedButDraft) {
+        await strapi.db.query(uid).update({
+          where: { id: entry.id },
+          data: { status: 'draft' },
+        })
+      }
+
+      if (draftButPublished.length > 0 || publishedButDraft.length > 0) {
+        strapi.log.info(
+          `[Migration] ${uid}: fixed ${draftButPublished.length} draft→published, ${publishedButDraft.length} published→draft`,
+        )
+        totalFixed += draftButPublished.length + publishedButDraft.length
+      }
+    }
+
+    await pluginStore.set({ key: PLUGIN_KEY, value: true })
+    strapi.log.info(
+      `[Migration] syncStatusField complete — ${totalFixed} entries fixed across ${STATUS_SYNC_UIDS.length} content types`,
+    )
+  } catch (error: unknown) {
+    const msg = error instanceof Error ? error.message : String(error)
+    strapi.log.warn(`[Migration] syncStatusField failed: ${msg}`)
   }
 }
 

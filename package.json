@@ -8,11 +8,13 @@
     "strapi": "strapi",
     "deploy": "strapi deploy",
     "postinstall": "node scripts/setup-translate-provider.js",
-    "migrate-tags": "node scripts/migrate-tags.js"
+    "migrate-tags": "node scripts/migrate-tags.js",
+    "migrate-to-r2": "node scripts/migrate-to-r2.js"
   },
   "dependencies": {
     "@strapi/plugin-graphql": "^5.0.0",
     "@strapi/plugin-users-permissions": "^5.0.0",
+    "@strapi/provider-upload-aws-s3": "^5.48.1",
     "@strapi/strapi": "^5.0.0",
     "lodash": "^4.17.19",
     "nodemailer": "^9.0.0",
@@ -22,5 +24,9 @@
     "react-router-dom": "^6.30.3",
     "strapi-plugin-translate": "^2.0.0-next.4",
     "styled-components": "6.4.1"
+  },
+  "devDependencies": {
+    "@aws-sdk/client-s3": "^3.1073.0",
+    "@aws-sdk/lib-storage": "^3.1073.0"
   }
 }
