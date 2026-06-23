@@ -366,7 +366,7 @@ export function ProductBatchPage() {
                         <Td>
                           <Badge
                             backgroundColor={
-                              p.status === 'published' ? 'success600' : 'neutral600'
+                              p.status === 'published' ? 'success100' : 'secondary100'
                             }
                           >
                             {p.status}
