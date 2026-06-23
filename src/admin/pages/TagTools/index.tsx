@@ -109,7 +109,7 @@ export function TagToolsPage() {
         get(`/api/tags/statistics${qs}`),
         get(`/api/tags/suggest-duplicates${qs}`),
         get(`/api/tags${qs}?pagination[pageSize]=500&sort=name:ASC&populate[products][count]=true&populate[site]=true`),
-        get('/content-manager/collection-types/api::site.site?pageSize=200&sort=name:ASC'),
+        get('/content-manager/collection-types/api::site.site?pageSize=200&sort=site_name:ASC'),
       ]);
       setStatData(statsRes.data as StatData);
       setDupeGroups((dupesRes.data ?? []) as DupeGroup[]);
@@ -117,7 +117,7 @@ export function TagToolsPage() {
       setSites(
         (sitesRes.data?.results ?? []).map((s: any) => ({
           documentId: s.documentId,
-          name: s.name,
+          name: s.site_name ?? s.name ?? '',
         })),
       );
     } catch (err: any) {

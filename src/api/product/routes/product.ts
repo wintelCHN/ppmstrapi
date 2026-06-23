@@ -1,7 +1,19 @@
 /**
- * product router.
+ * Product routes.
+ *
+ * Extends core CRUD with a batch-update custom endpoint
+ * for bulk editing site, category, and MOQ fields.
  */
 
-import { factories } from '@strapi/strapi';
-
-export default factories.createCoreRouter('api::product.product');
+export default {
+  type: 'content-api',
+  routes: [
+    // ── Custom: batch update (admin only) ─────────────────────────────
+    {
+      method: 'POST',
+      path: '/products/batch-update',
+      handler: 'product.batchUpdate',
+      config: { auth: false, policies: [] },
+    },
+  ],
+}

@@ -18,7 +18,7 @@ if (!Array.prototype.toSpliced) {
 }
 
 import type { StrapiApp } from '@strapi/strapi/admin';
-import { Folder, PuzzlePiece, Cog } from '@strapi/icons';
+import { Folder, PuzzlePiece, Cog, GridNine } from '@strapi/icons';
 
 export default {
   config: {
@@ -92,6 +92,21 @@ export default {
       Component: () =>
         import('./pages/TagTools').then((mod) => ({
           default: mod.TagToolsPage,
+        })),
+    });
+
+    // Product Batch Tools — bulk edit site / category / MOQ
+    app.addMenuLink({
+      to: 'product-batch',
+      icon: GridNine,
+      intlLabel: {
+        id: 'global.product-batch',
+        defaultMessage: 'Product Batch',
+      },
+      permissions: [],
+      Component: () =>
+        import('./pages/ProductBatch').then((mod) => ({
+          default: mod.ProductBatchPage,
         })),
     });
 
