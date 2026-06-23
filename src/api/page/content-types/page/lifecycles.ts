@@ -1,32 +1,108 @@
 /**
  * Page content-type lifecycles.
  *
- * - beforeUpdate: Syncs custom `status` field with Strapi's built-in
- *   Draft & Publish (`publishedAt`). When publishedAt is set, status
- *   becomes "published"; when cleared, status reverts to "draft".
- * - afterUpdate:  Triggers build webhook on the associated Site.
+ * - beforeCreate: auto-generates slug from shortName (i18n-aware).
+ * - beforeUpdate: re-generates slug if shortName changed,
+ *                 syncs custom `status` with Strapi Draft & Publish.
+ * - afterUpdate:  triggers build webhook on the associated Site.
  */
 
 import { logBuildWebhook } from '../../../shared/webhook'
 
+// ── helpers ──────────────────────────────────────────────────────────────────
+
+function slugify(text: string): string {
+  return text
+    .toLowerCase()
+    .replace(/[^a-z0-9一-鿿]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .replace(/-+/g, '-')
+}
+
+async function generateUniqueSlug(
+  strapi: any,
+  shortName: string,
+  excludeDocumentId?: string,
+): Promise<string> {
+  const base = slugify(shortName) || 'page'
+  let slug = base
+  let counter = 2
+
+  while (true) {
+    const existing: any[] = await strapi
+      .documents('api::page.page')
+      .findMany({
+        filters: { slug },
+        limit: 1,
+      })
+
+    if (
+      existing.length === 0 ||
+      (excludeDocumentId && existing[0].documentId === excludeDocumentId)
+    ) {
+      return slug
+    }
+
+    slug = `${base}-${counter}`
+    counter++
+  }
+}
+
+/** Extract shortName string from either i18n object or plain string. */
+function extractShortName(data: any): string {
+  if (!data.shortName) return ''
+  if (typeof data.shortName === 'string') return data.shortName
+  // i18n object: { en: "Home", zh: "首页", ... }
+  if (typeof data.shortName === 'object') {
+    return data.shortName.en || Object.values(data.shortName)[0] || ''
+  }
+  return ''
+}
+
+// ── lifecycles ───────────────────────────────────────────────────────────────
+
 export default {
-  /**
-   * Keep the custom `status` field in sync with Strapi 5's built-in
-   * Draft & Publish system (publishedAt).
-   *
-   * The page schema has BOTH draftAndPublish (publishedAt) AND a custom
-   * status enumeration — they are independent unless we sync them here.
-   */
-  async beforeUpdate(event: any) {
+  /** Auto-generate slug from shortName on create. */
+  async beforeCreate(event: any) {
     const { data } = event.params
 
+    const name = extractShortName(data)
+    if (name) {
+      try {
+        // Only generate if slug is not explicitly provided
+        if (!data.slug || data.slug === '') {
+          data.slug = await generateUniqueSlug(strapi, name)
+        }
+      } catch (err: unknown) {
+        const msg = err instanceof Error ? err.message : String(err)
+        strapi.log.error(`[Page Slug] Generation error: ${msg}`)
+      }
+    }
+  },
+
+  async beforeUpdate(event: any) {
+    const { data, where } = event.params
+    const documentId = where?.documentId
+
+    // 1. Sync custom `status` with built-in Draft & Publish (publishedAt)
     if (Object.prototype.hasOwnProperty.call(data, 'publishedAt')) {
       if (data.publishedAt === null) {
-        // Unpublish → mark as draft
         data.status = 'draft'
       } else {
-        // Publish → mark as published
         data.status = 'published'
+      }
+    }
+
+    // 2. Re-generate slug if shortName changed
+    if (data.shortName && documentId) {
+      try {
+        const name = extractShortName(data)
+        if (name && (!data.slug || data.slug === '')) {
+          data.slug = await generateUniqueSlug(strapi, name, documentId)
+        }
+      } catch (err: unknown) {
+        const msg = err instanceof Error ? err.message : String(err)
+        strapi.log.error(`[Page Slug] Update error: ${msg}`)
       }
     }
   },
