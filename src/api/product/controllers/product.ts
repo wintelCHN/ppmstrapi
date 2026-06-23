@@ -2,10 +2,16 @@
  * Product custom controller.
  *
  * Extends the core controller with:
- * - batchUpdate  — POST /api/products/batch-update
+ * - batchUpdate  — POST /api/products/batch-update (admin auth via JWT)
  */
 
 import { factories } from '@strapi/strapi'
+import jwt from 'jsonwebtoken'
+
+function reject(ctx: any, status: number, message: string) {
+  ctx.status = status
+  ctx.body = { data: null, error: { message, status } }
+}
 
 export default factories.createCoreController('api::product.product', ({ strapi }) => ({
   /**
@@ -14,13 +20,22 @@ export default factories.createCoreController('api::product.product', ({ strapi 
    * Body: { data: { documentIds: string[], data: { site?, category?, moq? } } }
    *
    * Updates site, category, and/or MOQ for a batch of products.
-   * Each product is updated individually through the Document Service
-   * (lifecycles fire, webhooks trigger, slug stays unchanged).
-   *
-   * Note: auth: false in route config bypasses default content-api auth
-   * (which would reject admin JWT). The admin panel is the only consumer.
+   * Admin JWT is verified inline (route uses auth: false to bypass
+   * default content-api users-permissions auth which rejects admin tokens).
    */
   async batchUpdate(ctx: any) {
+    // ── Admin JWT verification ────────────────────────────────────────
+    const authHeader = ctx.request.header.authorization
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return reject(ctx, 401, 'Missing or invalid credentials')
+    }
+    try {
+      const secret = strapi.config.get<string>('admin.auth.secret')
+      jwt.verify(authHeader.split(' ')[1], secret)
+    } catch {
+      return reject(ctx, 401, 'Missing or invalid credentials')
+    }
+
     try {
       const { documentIds, data } = ctx.request.body?.data ?? ctx.request.body ?? {}
 
