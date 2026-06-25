@@ -202,6 +202,28 @@ export default factories.createCoreController('api::product.product', ({ strapi 
         : []
       delete productData.imageUrls
 
+      // ── Dedup: check source_url before creating ───────────────────
+      // Prevents duplicate products when sheet update fails & retries
+      if (productData.source_url) {
+        const existing = await strapi.documents('api::product.product').findMany({
+          filters: { source_url: productData.source_url },
+          limit: 1,
+          populate: ['images', 'site', 'category', 'tags'],
+        })
+        if (existing && existing.length > 0) {
+          strapi.log.info(
+            `[Product CreateWithImages] Duplicate source_url skipped: ${productData.source_url} → existing documentId=${existing[0].documentId}`,
+          )
+          ctx.status = 200
+          ctx.body = {
+            data: existing[0],
+            _skipped: true,
+            _reason: `Duplicate source_url (existing documentId: ${existing[0].documentId})`,
+          }
+          return
+        }
+      }
+
       // ── Step 1: Create the product entry ────────────────────────────
       const product = await strapi.documents('api::product.product').create({
         data: productData as any,
