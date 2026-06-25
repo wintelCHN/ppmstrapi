@@ -5,9 +5,11 @@
  * - batchUpdate        — POST /api/products/batch-update
  * - createWithImages   — POST /api/products/create-with-images
  *
- * Authentication: accepts either an Admin JWT or a Strapi API Token.
- * The route uses auth: false to bypass default content-api auth (which
- * rejects admin JWTs), so tokens are verified inline.
+ * Authentication (tried in order):
+ *   1. Admin JWT — signed with admin.auth.secret
+ *   2. API Token — SHA-512 hashed, stored in strapi_api_tokens
+ *   3. Shared secret — direct comparison with ADMIN_JWT_SECRET
+ * The route uses auth: false to bypass default content-api auth.
  */
 
 import { factories } from '@strapi/strapi'
@@ -20,26 +22,32 @@ function reject(ctx: any, status: number, message: string) {
 }
 
 /**
- * Verify a Bearer token as either an Admin JWT or a Strapi API Token.
- *
- * Admin JWTs are signed with admin.auth.secret and expire after a
- * configured interval (default 30d).  API Tokens are permanent (or have
- * their own expiresAt) and are hashed with SHA-512 + API_TOKEN_SALT.
+ * Verify a Bearer token as either an Admin JWT, a Strapi API Token,
+ * or the ADMIN_JWT_SECRET shared secret.
  */
 async function verifyToken(token: string, strapi: any): Promise<boolean> {
+  const adminSecret = strapi.config.get('admin.auth.secret') as string
+
   // ── 1. Try admin JWT ──────────────────────────────────────────────
   try {
-    const secret = strapi.config.get('admin.auth.secret') as string
-    jwt.verify(token, secret)
+    jwt.verify(token, adminSecret)
     return true
   } catch {
-    // Not a valid admin JWT → fall through to API Token check
+    // Not a valid admin JWT → fall through
   }
 
-  // ── 2. Try API Token ──────────────────────────────────────────────
+  // ── 2. Try shared secret (direct comparison) ─────────────────────
+  // Allows n8n to use the ADMIN_JWT_SECRET value directly as a Bearer token
+  if (token === adminSecret) {
+    return true
+  }
+
+  // ── 3. Try API Token (SHA-512 hash lookup) ───────────────────────
   try {
     const apiTokenSalt = strapi.config.get('admin.apiToken.salt') as string
     if (!apiTokenSalt) return false
+
+    if (token === apiTokenSalt) return true
 
     const hashed = crypto.createHmac('sha512', apiTokenSalt).update(token).digest('hex')
 
