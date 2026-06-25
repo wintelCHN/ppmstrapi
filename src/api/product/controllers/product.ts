@@ -134,15 +134,22 @@ export default factories.createCoreController('api::product.product', ({ strapi 
   /**
    * POST /api/products/create-with-images
    *
-   * Accepts TWO input modes:
+   * Accepts THREE input modes:
    *
-   *   MODE A — application/json body (n8n friendly, no multipart):
+   *   MODE A — imageBase64 (n8n with BrightData proxy, recommended):
+   *     Content-Type: application/json
+   *     Body: { name, price, ..., imageBase64: [
+   *       { filename: "img_0.jpg", data: "<base64>", mimetype: "image/jpeg" }
+   *     ]}
+   *     → n8n downloads images via BrightData, base64-encodes, Strapi
+   *       decodes and uploads to R2. No Railway → Alibaba direct requests.
+   *
+   *   MODE B — imageUrls (server-side download from public URLs):
    *     Content-Type: application/json
    *     Body: { name, price, ..., imageUrls: ["https://...jpg", ...] }
-   *     → Server downloads images from URLs, uploads to media library,
-   *       and associates them with the new product.
+   *     → Server downloads images from URLs (watch for CDN blocking risk).
    *
-   *   MODE B — multipart/form-data (legacy, for direct file uploads):
+   *   MODE C — multipart/form-data (legacy, for direct file uploads):
    *     Content-Type: multipart/form-data
    *     Body:
    *       data        = '{"name":"Widget","price":9.99,...}'
@@ -173,14 +180,26 @@ export default factories.createCoreController('api::product.product', ({ strapi 
         return ctx.badRequest('Product name is required')
       }
 
-      // ── Extract imageUrls before creating product ──────────────────
-      // n8n passes Alibaba image URLs directly; server downloads them.
+      // ── Extract image inputs before creating product ─────────────────
+      // imageBase64: n8n downloads via BrightData proxy, base64-encodes
+      //   [{ filename: "img_0.jpg", data: "<base64>", mimetype: "image/jpeg" }]
+      const imageBase64: Array<{ filename: string; data: string; mimetype?: string }> =
+        Array.isArray(productData.imageBase64)
+          ? productData.imageBase64.filter(
+              (e: any) =>
+                typeof e?.filename === 'string' &&
+                typeof e?.data === 'string' &&
+                e.data.length > 0,
+            )
+          : []
+      delete productData.imageBase64
+
+      // imageUrls: server-side download from public URLs (legacy, CDN blocking risk)
       const imageUrls: string[] = Array.isArray(productData.imageUrls)
         ? productData.imageUrls.filter(
             (u: any) => typeof u === 'string' && u.startsWith('http'),
           )
         : []
-      // Remove imageUrls from product data so it doesn't hit schema validation
       delete productData.imageUrls
 
       // ── Step 1: Create the product entry ────────────────────────────
@@ -196,8 +215,65 @@ export default factories.createCoreController('api::product.product', ({ strapi 
       // ── Step 2: Upload images ──────────────────────────────────────
       const uploadService = strapi.plugins.upload.services.upload
 
-      // ── 2a: Upload from imageUrls (n8n JSON mode) ──────────────────
-      const imageResults: Array<{ url: string; ok: boolean; error?: string }> = []
+      // ── 2a: Upload from imageBase64 (n8n BrightData proxy, recommended) ──
+      const imageResults: Array<{ filename?: string; url?: string; ok: boolean; error?: string }> = []
+
+      if (imageBase64.length > 0) {
+        strapi.log.info(
+          `[Product CreateWithImages] Decoding ${imageBase64.length} base64 image(s) for documentId=${product.documentId}`,
+        )
+        const tmpDir = os.tmpdir()
+
+        for (const [idx, img] of imageBase64.entries()) {
+          let tmpPath = ''
+          try {
+            const buf = Buffer.from(img.data, 'base64')
+            if (buf.length === 0) {
+              imageResults.push({ filename: img.filename, ok: false, error: 'Empty base64 data' })
+              continue
+            }
+
+            const mimetype =
+              img.mimetype?.startsWith('image/') ? img.mimetype : 'image/jpeg'
+            const ext = mimetype.split('/')[1].replace('jpeg', 'jpg')
+            const filename = img.filename || `n8n_img_${Date.now()}_${idx}.${ext}`
+            tmpPath = path.join(tmpDir, filename.replace(/[<>:"/\\|?*]/g, '_'))
+
+            fs.writeFileSync(tmpPath, buf)
+
+            await uploadService.upload({
+              data: {
+                ref: 'api::product.product',
+                refId: product.id,
+                field: 'images',
+              },
+              files: {
+                filepath: tmpPath,
+                originalFilename: filename,
+                mimetype,
+                size: buf.length,
+              },
+            })
+
+            imageResults.push({ filename: img.filename, ok: true })
+            strapi.log.info(
+              `[Product CreateWithImages] Uploaded base64 image ${idx + 1}/${imageBase64.length}: ${filename}`,
+            )
+          } catch (err: unknown) {
+            const msg = err instanceof Error ? err.message : String(err)
+            imageResults.push({ filename: img.filename, ok: false, error: msg })
+            strapi.log.warn(
+              `[Product CreateWithImages] Failed to decode/upload base64 image "${img.filename}": ${msg}`,
+            )
+          } finally {
+            if (tmpPath) {
+              try { fs.unlinkSync(tmpPath) } catch {}
+            }
+          }
+        }
+      }
+
+      // ── 2b: Upload from imageUrls (server-side download, CDN blocking risk) ──
 
       if (imageUrls.length > 0) {
         strapi.log.info(
@@ -284,7 +360,7 @@ export default factories.createCoreController('api::product.product', ({ strapi 
         }
       }
 
-      // ── 2b: Upload from multipart files (legacy mode) ─────────────
+      // ── 2c: Upload from multipart files (legacy mode) ─────────────
       const files = ctx.request.files as Record<string, any> | undefined
 
       if (files && Object.keys(files).length > 0) {
