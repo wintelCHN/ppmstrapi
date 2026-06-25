@@ -1,8 +1,10 @@
 /**
  * Product routes.
  *
- * Combines core CRUD with a batch-update custom endpoint
- * for bulk editing site, category, and MOQ fields.
+ * Combines core CRUD with custom endpoints:
+ * - batch-update        — bulk edit site, category, and MOQ fields
+ * - create-with-images  — create product + upload images in one request
+ *
  * createCoreRouter() can't be used alongside custom routes in Strapi 5,
  * so all core routes are listed explicitly.
  */
@@ -46,6 +48,13 @@ export default {
       method: 'POST',
       path: '/products/batch-update',
       handler: 'product.batchUpdate',
+      config: { auth: false, policies: [] },
+    },
+    // ── Custom: create product with images in one request (admin only) ─
+    {
+      method: 'POST',
+      path: '/products/create-with-images',
+      handler: 'product.createWithImages',
       config: { auth: false, policies: [] },
     },
   ],
