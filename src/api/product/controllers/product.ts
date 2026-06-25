@@ -15,6 +15,9 @@
 import { factories } from '@strapi/strapi'
 import jwt from 'jsonwebtoken'
 import crypto from 'crypto'
+import fs from 'fs'
+import path from 'path'
+import os from 'os'
 
 function reject(ctx: any, status: number, message: string) {
   ctx.status = status
@@ -131,27 +134,21 @@ export default factories.createCoreController('api::product.product', ({ strapi 
   /**
    * POST /api/products/create-with-images
    *
-   * Accepts multipart/form-data with:
-   *   - data  (string) — JSON-encoded product fields
-   *   - files (file[]) — one or more image files (field name: "files.images")
+   * Accepts TWO input modes:
    *
-   * Strapi v5 no longer supports uploading files during entry creation in a
-   * single request via the standard REST API. This endpoint bridges that gap
-   * by performing the two steps internally:
-   *   1. Create the product entry via strapi.documents()
-   *   2. Upload each image via the upload plugin with ref/refId/field so the
-   *      files are immediately associated with the new product's "images" field
+   *   MODE A — application/json body (n8n friendly, no multipart):
+   *     Content-Type: application/json
+   *     Body: { name, price, ..., imageUrls: ["https://...jpg", ...] }
+   *     → Server downloads images from URLs, uploads to media library,
+   *       and associates them with the new product.
    *
-   * Accepts either an Admin JWT or a Strapi API Token (route uses auth: false
-   * to bypass default content-api auth, tokens verified inline).
+   *   MODE B — multipart/form-data (legacy, for direct file uploads):
+   *     Content-Type: multipart/form-data
+   *     Body:
+   *       data        = '{"name":"Widget","price":9.99,...}'
+   *       files.images = <binary file(s)>
    *
-   * n8n usage:
-   *   POST /api/products/create-with-images
-   *   Authorization: Bearer <admin-jwt-or-api-token>
-   *   Content-Type: multipart/form-data
-   *   Body:
-   *     data        = '{"name":"Widget","price":9.99,...}'
-   *     files.images = <binary file(s)>
+   * Auth: Bearer token (Admin JWT, API Token, or shared secret).
    */
   async createWithImages(ctx: any) {
     // ── Authentication ───────────────────────────────────────────────
@@ -165,10 +162,9 @@ export default factories.createCoreController('api::product.product', ({ strapi 
     }
 
     try {
-      // ── Parse multipart body ────────────────────────────────────────
-      // Strapi's Koa middleware parses multipart automatically.
-      // ctx.request.body  → text fields
-      // ctx.request.files → uploaded files (keyed by field name)
+      // ── Parse body (handles both JSON and multipart) ────────────────
+      // JSON mode:  ctx.request.body = { name, price, ..., imageUrls: [...] }
+      // Multipart:  ctx.request.body.data = '{"name":"...",...}'  (JSON string)
       const rawData = ctx.request.body?.data ?? ctx.request.body ?? {}
       const productData: Record<string, any> =
         typeof rawData === 'string' ? JSON.parse(rawData) : rawData
@@ -176,6 +172,16 @@ export default factories.createCoreController('api::product.product', ({ strapi 
       if (!productData.name) {
         return ctx.badRequest('Product name is required')
       }
+
+      // ── Extract imageUrls before creating product ──────────────────
+      // n8n passes Alibaba image URLs directly; server downloads them.
+      const imageUrls: string[] = Array.isArray(productData.imageUrls)
+        ? productData.imageUrls.filter(
+            (u: any) => typeof u === 'string' && u.startsWith('http'),
+          )
+        : []
+      // Remove imageUrls from product data so it doesn't hit schema validation
+      delete productData.imageUrls
 
       // ── Step 1: Create the product entry ────────────────────────────
       const product = await strapi.documents('api::product.product').create({
@@ -187,16 +193,76 @@ export default factories.createCoreController('api::product.product', ({ strapi 
         `[Product CreateWithImages] Created product documentId=${product.documentId} name="${product.name}"`,
       )
 
-      // ── Step 2: Upload images and associate them ─────────────────────
-      // Files may arrive under "files.images" (n8n multipart field name)
-      // or simply "files" as a fallback.
+      // ── Step 2: Upload images ──────────────────────────────────────
+      const uploadService = strapi.plugins.upload.services.upload
+
+      // ── 2a: Upload from imageUrls (n8n JSON mode) ──────────────────
+      if (imageUrls.length > 0) {
+        strapi.log.info(
+          `[Product CreateWithImages] Downloading ${imageUrls.length} image URL(s) for documentId=${product.documentId}`,
+        )
+        const tmpDir = os.tmpdir()
+
+        for (const [idx, imageUrl] of imageUrls.entries()) {
+          let tmpPath = ''
+          try {
+            const resp = await fetch(imageUrl, {
+              signal: AbortSignal.timeout(30000),
+            })
+            if (!resp.ok) {
+              strapi.log.warn(
+                `[Product CreateWithImages] Image URL returned ${resp.status}: ${imageUrl}`,
+              )
+              continue
+            }
+
+            const buffer = Buffer.from(await resp.arrayBuffer())
+            if (buffer.length === 0) continue
+
+            const contentType =
+              resp.headers.get('content-type')?.split(';')[0]?.trim() || 'image/jpeg'
+            if (!contentType.startsWith('image/')) continue
+
+            const ext = contentType.split('/')[1].replace('jpeg', 'jpg')
+            const filename = `n8n_img_${Date.now()}_${idx}.${ext}`
+            tmpPath = path.join(tmpDir, filename)
+
+            fs.writeFileSync(tmpPath, buffer)
+
+            await uploadService.upload({
+              data: {
+                ref: 'api::product.product',
+                refId: product.documentId,
+                field: 'images',
+              },
+              files: {
+                filepath: tmpPath,
+                originalFilename: filename,
+                mimetype: contentType,
+                size: buffer.length,
+              },
+            })
+
+            strapi.log.info(
+              `[Product CreateWithImages] Uploaded image ${idx + 1}/${imageUrls.length}: ${filename}`,
+            )
+          } catch (fetchErr: unknown) {
+            const msg = fetchErr instanceof Error ? fetchErr.message : String(fetchErr)
+            strapi.log.warn(
+              `[Product CreateWithImages] Failed to download/upload image URL: ${imageUrl} — ${msg}`,
+            )
+          } finally {
+            if (tmpPath) {
+              try { fs.unlinkSync(tmpPath) } catch {}
+            }
+          }
+        }
+      }
+
+      // ── 2b: Upload from multipart files (legacy mode) ─────────────
       const files = ctx.request.files as Record<string, any> | undefined
 
       if (files && Object.keys(files).length > 0) {
-        const uploadService = strapi.plugins.upload.services.upload
-
-        // Collect all file objects regardless of the field key used by the client.
-        // Support both "files.images" (preferred) and any other key.
         const imageFiles: any[] = []
         for (const [key, value] of Object.entries(files)) {
           if (key === 'files.images' || key === 'files' || key.startsWith('files')) {
@@ -210,12 +276,8 @@ export default factories.createCoreController('api::product.product', ({ strapi 
 
         if (imageFiles.length > 0) {
           strapi.log.info(
-            `[Product CreateWithImages] Uploading ${imageFiles.length} image(s) for documentId=${product.documentId}`,
+            `[Product CreateWithImages] Uploading ${imageFiles.length} multipart file(s) for documentId=${product.documentId}`,
           )
-
-          // Upload each file individually so we can capture its media ID.
-          // The upload service associates the file with the entry when
-          // ref / refId / field are provided.
           for (const file of imageFiles) {
             try {
               await uploadService.upload({
@@ -231,7 +293,6 @@ export default factories.createCoreController('api::product.product', ({ strapi 
               strapi.log.error(
                 `[Product CreateWithImages] Failed to upload file "${file.name ?? file.originalFilename}": ${msg}`,
               )
-              // Continue uploading remaining files rather than aborting the whole request
             }
           }
         }
