@@ -197,6 +197,8 @@ export default factories.createCoreController('api::product.product', ({ strapi 
       const uploadService = strapi.plugins.upload.services.upload
 
       // ── 2a: Upload from imageUrls (n8n JSON mode) ──────────────────
+      const imageResults: Array<{ url: string; ok: boolean; error?: string }> = []
+
       if (imageUrls.length > 0) {
         strapi.log.info(
           `[Product CreateWithImages] Downloading ${imageUrls.length} image URL(s) for documentId=${product.documentId}`,
@@ -206,10 +208,21 @@ export default factories.createCoreController('api::product.product', ({ strapi 
         for (const [idx, imageUrl] of imageUrls.entries()) {
           let tmpPath = ''
           try {
+            // Alibaba CDN requires browser-like headers; plain fetch() gets blocked
             const resp = await fetch(imageUrl, {
               signal: AbortSignal.timeout(30000),
+              headers: {
+                'User-Agent':
+                  'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36',
+                Accept:
+                  'image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8',
+                'Accept-Language': 'en-US,en;q=0.9',
+                Referer: 'https://www.alibaba.com/',
+              },
             })
             if (!resp.ok) {
+              const msg = `HTTP ${resp.status}`
+              imageResults.push({ url: imageUrl, ok: false, error: msg })
               strapi.log.warn(
                 `[Product CreateWithImages] Image URL returned ${resp.status}: ${imageUrl}`,
               )
@@ -217,11 +230,21 @@ export default factories.createCoreController('api::product.product', ({ strapi 
             }
 
             const buffer = Buffer.from(await resp.arrayBuffer())
-            if (buffer.length === 0) continue
+            if (buffer.length === 0) {
+              imageResults.push({ url: imageUrl, ok: false, error: 'Empty body' })
+              continue
+            }
 
             const contentType =
               resp.headers.get('content-type')?.split(';')[0]?.trim() || 'image/jpeg'
-            if (!contentType.startsWith('image/')) continue
+            if (!contentType.startsWith('image/')) {
+              imageResults.push({
+                url: imageUrl,
+                ok: false,
+                error: `Not an image: ${contentType}`,
+              })
+              continue
+            }
 
             const ext = contentType.split('/')[1].replace('jpeg', 'jpg')
             const filename = `n8n_img_${Date.now()}_${idx}.${ext}`
@@ -243,11 +266,13 @@ export default factories.createCoreController('api::product.product', ({ strapi 
               },
             })
 
+            imageResults.push({ url: imageUrl, ok: true })
             strapi.log.info(
               `[Product CreateWithImages] Uploaded image ${idx + 1}/${imageUrls.length}: ${filename}`,
             )
           } catch (fetchErr: unknown) {
             const msg = fetchErr instanceof Error ? fetchErr.message : String(fetchErr)
+            imageResults.push({ url: imageUrl, ok: false, error: msg })
             strapi.log.warn(
               `[Product CreateWithImages] Failed to download/upload image URL: ${imageUrl} — ${msg}`,
             )
@@ -305,7 +330,10 @@ export default factories.createCoreController('api::product.product', ({ strapi 
       })
 
       ctx.status = 201
-      ctx.body = { data: populated }
+      ctx.body = {
+        data: populated,
+        _imageResults: imageResults.length > 0 ? imageResults : undefined,
+      }
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err)
       strapi.log.error(`[Product CreateWithImages] Unexpected error: ${msg}`)
