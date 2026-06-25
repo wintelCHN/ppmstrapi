@@ -255,7 +255,7 @@ export default factories.createCoreController('api::product.product', ({ strapi 
             await uploadService.upload({
               data: {
                 ref: 'api::product.product',
-                refId: product.documentId,
+                refId: product.id,
                 field: 'images',
               },
               files: {
@@ -308,7 +308,7 @@ export default factories.createCoreController('api::product.product', ({ strapi 
               await uploadService.upload({
                 data: {
                   ref: 'api::product.product',
-                  refId: product.documentId,
+                  refId: product.id,
                   field: 'images',
                 },
                 files: file,
