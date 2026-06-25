@@ -48,7 +48,14 @@ const config: Core.Config.Middlewares = [
   },
   'strapi::poweredBy',
   'strapi::query',
-  'strapi::body',
+  {
+    name: 'strapi::body',
+    config: {
+      formidable: {
+        maxFields: 5000,
+      },
+    },
+  },
   'strapi::session',
   'strapi::favicon',
   'strapi::public',
