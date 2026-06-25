@@ -132,3 +132,4 @@ build
 .strapi-cloud.json
 CLAUDE.md
 docs/
+.mcp.json

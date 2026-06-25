@@ -2,16 +2,62 @@
  * Product custom controller.
  *
  * Extends the core controller with:
- * - batchUpdate        — POST /api/products/batch-update (admin auth via JWT)
- * - createWithImages   — POST /api/products/create-with-images (admin auth via JWT)
+ * - batchUpdate        — POST /api/products/batch-update
+ * - createWithImages   — POST /api/products/create-with-images
+ *
+ * Authentication: accepts either an Admin JWT or a Strapi API Token.
+ * The route uses auth: false to bypass default content-api auth (which
+ * rejects admin JWTs), so tokens are verified inline.
  */
 
 import { factories } from '@strapi/strapi'
 import jwt from 'jsonwebtoken'
+import crypto from 'crypto'
 
 function reject(ctx: any, status: number, message: string) {
   ctx.status = status
   ctx.body = { data: null, error: { message, status } }
+}
+
+/**
+ * Verify a Bearer token as either an Admin JWT or a Strapi API Token.
+ *
+ * Admin JWTs are signed with admin.auth.secret and expire after a
+ * configured interval (default 30d).  API Tokens are permanent (or have
+ * their own expiresAt) and are hashed with SHA-512 + API_TOKEN_SALT.
+ */
+async function verifyToken(token: string, strapi: any): Promise<boolean> {
+  // ── 1. Try admin JWT ──────────────────────────────────────────────
+  try {
+    const secret = strapi.config.get('admin.auth.secret') as string
+    jwt.verify(token, secret)
+    return true
+  } catch {
+    // Not a valid admin JWT → fall through to API Token check
+  }
+
+  // ── 2. Try API Token ──────────────────────────────────────────────
+  try {
+    const apiTokenSalt = strapi.config.get('admin.apiToken.salt') as string
+    if (!apiTokenSalt) return false
+
+    const hashed = crypto.createHmac('sha512', apiTokenSalt).update(token).digest('hex')
+
+    const apiToken = await strapi.db.query('admin::api-token').findOne({
+      where: { accessKey: hashed },
+    })
+
+    if (!apiToken) return false
+
+    // Check expiry (API Tokens may have an optional expiresAt)
+    if (apiToken.expiresAt && new Date(apiToken.expiresAt) < new Date()) {
+      return false
+    }
+
+    return true
+  } catch {
+    return false
+  }
 }
 
 export default factories.createCoreController('api::product.product', ({ strapi }) => ({
@@ -21,19 +67,15 @@ export default factories.createCoreController('api::product.product', ({ strapi 
    * Body: { data: { documentIds: string[], data: { site?, category?, moq? } } }
    *
    * Updates site, category, and/or MOQ for a batch of products.
-   * Admin JWT is verified inline (route uses auth: false to bypass
-   * default content-api users-permissions auth which rejects admin tokens).
    */
   async batchUpdate(ctx: any) {
-    // ── Admin JWT verification ────────────────────────────────────────
+    // ── Authentication ───────────────────────────────────────────────
     const authHeader = ctx.request.header.authorization
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
       return reject(ctx, 401, 'Missing or invalid credentials')
     }
-    try {
-      const secret = strapi.config.get<string>('admin.auth.secret')
-      jwt.verify(authHeader.split(' ')[1], secret)
-    } catch {
+    const valid = await verifyToken(authHeader.split(' ')[1], strapi)
+    if (!valid) {
       return reject(ctx, 401, 'Missing or invalid credentials')
     }
 
@@ -92,27 +134,25 @@ export default factories.createCoreController('api::product.product', ({ strapi 
    *   2. Upload each image via the upload plugin with ref/refId/field so the
    *      files are immediately associated with the new product's "images" field
    *
-   * Admin JWT is verified inline (route uses auth: false to bypass the default
-   * content-api users-permissions auth which rejects admin tokens).
+   * Accepts either an Admin JWT or a Strapi API Token (route uses auth: false
+   * to bypass default content-api auth, tokens verified inline).
    *
    * n8n usage:
    *   POST /api/products/create-with-images
-   *   Authorization: Bearer <admin-jwt>
+   *   Authorization: Bearer <admin-jwt-or-api-token>
    *   Content-Type: multipart/form-data
    *   Body:
    *     data        = '{"name":"Widget","price":9.99,...}'
    *     files.images = <binary file(s)>
    */
   async createWithImages(ctx: any) {
-    // ── Admin JWT verification ────────────────────────────────────────
+    // ── Authentication ───────────────────────────────────────────────
     const authHeader = ctx.request.header.authorization
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
       return reject(ctx, 401, 'Missing or invalid credentials')
     }
-    try {
-      const secret = strapi.config.get<string>('admin.auth.secret')
-      jwt.verify(authHeader.split(' ')[1], secret)
-    } catch {
+    const valid = await verifyToken(authHeader.split(' ')[1], strapi)
+    if (!valid) {
       return reject(ctx, 401, 'Missing or invalid credentials')
     }
 
