@@ -9,8 +9,9 @@
   "options": {},
   "attributes": {
     "author": {
-      "type": "string",
-      "required": false
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::author.author"
     },
     "wordCount": {
       "type": "integer",

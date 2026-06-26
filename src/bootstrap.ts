@@ -24,6 +24,7 @@ const PUBLIC_READ_CONTENT_TYPES: PermissionConfig[] = [
   { uid: 'api::keyword-cluster.keyword-cluster', actions: ['find', 'findOne'] },
   { uid: 'api::tag.tag', actions: ['find', 'findOne'] },
   { uid: 'api::faq.faq', actions: ['find', 'findOne'] },
+  { uid: 'api::author.author', actions: ['find', 'findOne'] },
 ]
 
 export async function bootstrap() {
@@ -184,6 +185,7 @@ const STATUS_SYNC_UIDS = [
   'api::blog.blog',
   'api::news.news',
   'api::product.product',
+  'api::author.author',
 ] as const
 
 async function syncPageStatusField() {

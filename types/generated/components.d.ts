@@ -9,7 +9,7 @@ export interface ElementsArticleMeta extends Struct.ComponentSchema {
     name: 'ArticleMeta';
   };
   attributes: {
-    author: Schema.Attribute.String;
+    author: Schema.Attribute.Relation<'manyToOne', 'api::author.author'>;
     wordCount: Schema.Attribute.Integer;
   };
 }
