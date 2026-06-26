@@ -265,6 +265,17 @@
         "audios"
       ]
     },
+    "product_schema": {
+      "type": "component",
+      "repeatable": false,
+      "component": "elements.product-schema",
+      "required": false,
+      "pluginOptions": {
+        "i18n": {
+          "localized": false
+        }
+      }
+    },
     "desc_video": {
       "type": "media",
       "pluginOptions": {

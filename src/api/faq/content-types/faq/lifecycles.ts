@@ -1,5 +1,5 @@
 /**
- * Blog content-type lifecycles.
+ * FAQ content-type lifecycles.
  *
  * - beforeUpdate: Syncs custom `status` field with Strapi's built-in
  *   Draft & Publish (`publishedAt`).
@@ -19,7 +19,7 @@ export default {
   async afterUpdate(event: any) {
     const documentId = event?.params?.documentId
     if (documentId) {
-      logBuildWebhook(strapi, 'api::blog.blog', documentId)
+      logBuildWebhook(strapi, 'api::faq.faq', documentId)
     }
   },
 }

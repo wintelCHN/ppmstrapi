@@ -43,6 +43,35 @@
           "localized": true
         }
       }
+    },
+    "organization": {
+      "type": "component",
+      "repeatable": false,
+      "component": "elements.organization",
+      "required": false,
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      }
+    },
+    "googleSearchConsoleToken": {
+      "type": "string",
+      "required": false,
+      "pluginOptions": {
+        "i18n": {
+          "localized": false
+        }
+      }
+    },
+    "bingSiteAuth": {
+      "type": "string",
+      "required": false,
+      "pluginOptions": {
+        "i18n": {
+          "localized": false
+        }
+      }
     }
   }
 }

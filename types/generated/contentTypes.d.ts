@@ -458,6 +458,12 @@ export interface ApiBlogBlog extends Struct.CollectionTypeSchema {
     };
   };
   attributes: {
+    article_meta: Schema.Attribute.Component<'elements.article-meta', false> &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: false;
+        };
+      }>;
     content: Schema.Attribute.RichText &
       Schema.Attribute.SetPluginOptions<{
         i18n: {
@@ -659,9 +665,21 @@ export interface ApiGlobalGlobal extends Struct.SingleTypeSchema {
     };
   };
   attributes: {
+    bingSiteAuth: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: false;
+        };
+      }>;
     createdAt: Schema.Attribute.DateTime;
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
+    googleSearchConsoleToken: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: false;
+        };
+      }>;
     locale: Schema.Attribute.String;
     localizations: Schema.Attribute.Relation<'oneToMany', 'api::global.global'>;
     metadata: Schema.Attribute.Component<'meta.metadata', false> &
@@ -672,6 +690,12 @@ export interface ApiGlobalGlobal extends Struct.SingleTypeSchema {
       }>;
     metaTitleSuffix: Schema.Attribute.String &
       Schema.Attribute.Required &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    organization: Schema.Attribute.Component<'elements.organization', false> &
       Schema.Attribute.SetPluginOptions<{
         i18n: {
           localized: true;
@@ -737,6 +761,15 @@ export interface ApiKeywordClusterKeywordCluster
       'oneToMany',
       'api::keyword-cluster.keyword-cluster'
     >;
+    metadata: Schema.Attribute.Component<'meta.metadata', false> &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+        translate: {
+          translate: 'translate';
+        };
+      }>;
     name: Schema.Attribute.String &
       Schema.Attribute.Required &
       Schema.Attribute.SetPluginOptions<{
@@ -857,6 +890,12 @@ export interface ApiNewsNews extends Struct.CollectionTypeSchema {
     };
   };
   attributes: {
+    article_meta: Schema.Attribute.Component<'elements.article-meta', false> &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: false;
+        };
+      }>;
     content: Schema.Attribute.RichText &
       Schema.Attribute.SetPluginOptions<{
         i18n: {
@@ -1173,6 +1212,15 @@ export interface ApiProductProduct extends Struct.CollectionTypeSchema {
         };
       }>;
     price: Schema.Attribute.Decimal &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: false;
+        };
+      }>;
+    product_schema: Schema.Attribute.Component<
+      'elements.product-schema',
+      false
+    > &
       Schema.Attribute.SetPluginOptions<{
         i18n: {
           localized: false;

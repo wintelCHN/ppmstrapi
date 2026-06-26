@@ -23,6 +23,7 @@ const PUBLIC_READ_CONTENT_TYPES: PermissionConfig[] = [
   { uid: 'api::site-layout.site-layout', actions: ['find', 'findOne'] },
   { uid: 'api::keyword-cluster.keyword-cluster', actions: ['find', 'findOne'] },
   { uid: 'api::tag.tag', actions: ['find', 'findOne'] },
+  { uid: 'api::faq.faq', actions: ['find', 'findOne'] },
 ]
 
 export async function bootstrap() {

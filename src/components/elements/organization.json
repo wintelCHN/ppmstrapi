@@ -1,0 +1,80 @@
+{
+  "collectionName": "components_elements_organizations",
+  "info": {
+    "name": "Organization",
+    "displayName": "Organization",
+    "icon": "building",
+    "description": "Company/brand info for Organization schema (JSON-LD) and Knowledge Graph"
+  },
+  "options": {},
+  "attributes": {
+    "name": {
+      "type": "string",
+      "required": true
+    },
+    "legalName": {
+      "type": "string",
+      "required": false
+    },
+    "description": {
+      "type": "text",
+      "required": false
+    },
+    "url": {
+      "type": "string",
+      "required": false
+    },
+    "logo": {
+      "type": "media",
+      "allowedTypes": ["images"],
+      "multiple": false,
+      "required": false
+    },
+    "sameAs": {
+      "type": "json",
+      "required": false
+    },
+    "email": {
+      "type": "email",
+      "required": false
+    },
+    "telephone": {
+      "type": "string",
+      "required": false
+    },
+    "address": {
+      "type": "text",
+      "required": false
+    },
+    "geoLatitude": {
+      "type": "float",
+      "required": false
+    },
+    "geoLongitude": {
+      "type": "float",
+      "required": false
+    },
+    "openingHours": {
+      "type": "json",
+      "required": false
+    },
+    "areaServed": {
+      "type": "string",
+      "required": false
+    },
+    "priceRange": {
+      "type": "string",
+      "required": false
+    },
+    "businessType": {
+      "type": "enumeration",
+      "enum": ["Brand", "Manufacturer", "Wholesaler", "Supplier", "Retailer"],
+      "default": "Supplier",
+      "required": false
+    },
+    "industry": {
+      "type": "json",
+      "required": false
+    }
+  }
+}

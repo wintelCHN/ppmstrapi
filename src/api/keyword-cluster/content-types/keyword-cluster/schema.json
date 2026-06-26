@@ -98,6 +98,20 @@
       "target": "api::site.site",
       "inversedBy": "keyword_clusters"
     },
+    "metadata": {
+      "type": "component",
+      "repeatable": false,
+      "component": "meta.metadata",
+      "required": false,
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        },
+        "translate": {
+          "translate": "translate"
+        }
+      }
+    },
     "pages": {
       "type": "relation",
       "relation": "oneToMany",

@@ -1,5 +1,19 @@
 import type { Schema, Struct } from '@strapi/strapi';
 
+export interface ElementsArticleMeta extends Struct.ComponentSchema {
+  collectionName: 'components_elements_article_metas';
+  info: {
+    description: 'Structured data fields for Article/NewsArticle schema (JSON-LD)';
+    displayName: 'Article Meta';
+    icon: 'newspaper';
+    name: 'ArticleMeta';
+  };
+  attributes: {
+    author: Schema.Attribute.String;
+    wordCount: Schema.Attribute.Integer;
+  };
+}
+
 export interface ElementsComparisonColumn extends Struct.ComponentSchema {
   collectionName: 'components_elements_comparison_columns';
   info: {
@@ -132,6 +146,37 @@ export interface ElementsNotificationBanner extends Struct.ComponentSchema {
   };
 }
 
+export interface ElementsOrganization extends Struct.ComponentSchema {
+  collectionName: 'components_elements_organizations';
+  info: {
+    description: 'Company/brand info for Organization schema (JSON-LD) and Knowledge Graph';
+    displayName: 'Organization';
+    icon: 'building';
+    name: 'Organization';
+  };
+  attributes: {
+    address: Schema.Attribute.Text;
+    areaServed: Schema.Attribute.String;
+    businessType: Schema.Attribute.Enumeration<
+      ['Brand', 'Manufacturer', 'Wholesaler', 'Supplier', 'Retailer']
+    > &
+      Schema.Attribute.DefaultTo<'Supplier'>;
+    description: Schema.Attribute.Text;
+    email: Schema.Attribute.Email;
+    geoLatitude: Schema.Attribute.Float;
+    geoLongitude: Schema.Attribute.Float;
+    industry: Schema.Attribute.JSON;
+    legalName: Schema.Attribute.String;
+    logo: Schema.Attribute.Media<'images'>;
+    name: Schema.Attribute.String & Schema.Attribute.Required;
+    openingHours: Schema.Attribute.JSON;
+    priceRange: Schema.Attribute.String;
+    sameAs: Schema.Attribute.JSON;
+    telephone: Schema.Attribute.String;
+    url: Schema.Attribute.String;
+  };
+}
+
 export interface ElementsPlan extends Struct.ComponentSchema {
   collectionName: 'components_elements_plans';
   info: {
@@ -146,6 +191,28 @@ export interface ElementsPlan extends Struct.ComponentSchema {
     name: Schema.Attribute.String;
     price: Schema.Attribute.Decimal;
     pricePeriod: Schema.Attribute.String;
+  };
+}
+
+export interface ElementsProductSchema extends Struct.ComponentSchema {
+  collectionName: 'components_elements_product_schemas';
+  info: {
+    description: 'Structured data fields for Product schema (JSON-LD)';
+    displayName: 'Product Schema';
+    icon: 'shopping-cart';
+    name: 'ProductSchema';
+  };
+  attributes: {
+    aggregateRating: Schema.Attribute.JSON;
+    availability: Schema.Attribute.Enumeration<
+      ['InStock', 'OutOfStock', 'PreOrder', 'BackOrder']
+    > &
+      Schema.Attribute.DefaultTo<'InStock'>;
+    brand: Schema.Attribute.String;
+    gtin: Schema.Attribute.String;
+    mpn: Schema.Attribute.String;
+    priceValidUntil: Schema.Attribute.Date;
+    shippingDetails: Schema.Attribute.JSON;
   };
 }
 
@@ -316,9 +383,23 @@ export interface MetaMetadata extends Struct.ComponentSchema {
     name: 'Metadata';
   };
   attributes: {
+    articleSection: Schema.Attribute.String;
+    canonicalOverride: Schema.Attribute.String;
     metaDescription: Schema.Attribute.Text & Schema.Attribute.Required;
     metaKeywords: Schema.Attribute.Text;
     metaTitle: Schema.Attribute.String & Schema.Attribute.Required;
+    nofollow: Schema.Attribute.Boolean & Schema.Attribute.DefaultTo<false>;
+    noindex: Schema.Attribute.Boolean & Schema.Attribute.DefaultTo<false>;
+    ogDescriptionOverride: Schema.Attribute.Text;
+    ogTitleOverride: Schema.Attribute.String;
+    priority: Schema.Attribute.Decimal &
+      Schema.Attribute.SetMinMax<
+        {
+          max: 1;
+          min: 0;
+        },
+        number
+      >;
     shareImage: Schema.Attribute.Media<'images'>;
     twitterCardType: Schema.Attribute.Enumeration<
       ['summary', 'summary_large_image', 'app', 'player']
@@ -633,6 +714,7 @@ export interface SharedRelatedProducts extends Struct.ComponentSchema {
 declare module '@strapi/strapi' {
   export module Public {
     export interface ComponentSchemas {
+      'elements.article-meta': ElementsArticleMeta;
       'elements.comparison-column': ElementsComparisonColumn;
       'elements.comparison-row': ElementsComparisonRow;
       'elements.faq-item': ElementsFaqItem;
@@ -642,7 +724,9 @@ declare module '@strapi/strapi' {
       'elements.footer-section': ElementsFooterSection;
       'elements.logos': ElementsLogos;
       'elements.notification-banner': ElementsNotificationBanner;
+      'elements.organization': ElementsOrganization;
       'elements.plan': ElementsPlan;
+      'elements.product-schema': ElementsProductSchema;
       'elements.statistic-item': ElementsStatisticItem;
       'elements.testimonial': ElementsTestimonial;
       'layout.nav-item': LayoutNavItem;

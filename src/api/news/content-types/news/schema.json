@@ -80,6 +80,17 @@
         "published"
       ]
     },
+    "article_meta": {
+      "type": "component",
+      "repeatable": false,
+      "component": "elements.article-meta",
+      "required": false,
+      "pluginOptions": {
+        "i18n": {
+          "localized": false
+        }
+      }
+    },
     "site": {
       "type": "relation",
       "relation": "manyToOne",

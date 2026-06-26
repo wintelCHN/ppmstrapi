@@ -3,12 +3,17 @@
  *
  * Centralizes build-trigger logic used by content-type lifecycles.
  * When a content entry is updated, the associated Site's build_webhook URL
- * is read and logged. Actual HTTP dispatch is deferred to a future phase.
+ * is read and dispatched via fire-and-forget HTTP POST.
+ *
+ * Uses Node.js built-in fetch (zero dependencies). The POST body contains
+ * minimal metadata so deploy platforms (Vercel, Netlify, Cloudflare Pages)
+ * can log which site/entry triggered the build.
  */
 
 interface SiteRelation {
-  build_webhook: string | null
   name: string
+  build_webhook: string | null
+  deploy_platform: string | null
 }
 
 export async function logBuildWebhook(
@@ -36,11 +41,40 @@ export async function logBuildWebhook(
       return
     }
 
-    strapi.log.info(
-      `[Webhook] Would call: ${site.build_webhook} | entry=${uid}::${documentId} | site=${site.name}`,
-    )
+    const platform = site.deploy_platform ?? 'unknown'
+
+    // Fire-and-forget: do NOT await — the .then/.catch chain runs independently.
+    // The admin response returns immediately; webhook dispatch happens in the background.
+    fetch(site.build_webhook, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        site: site.name,
+        entry: uid,
+        documentId,
+        deployPlatform: platform,
+      }),
+      signal: AbortSignal.timeout(10000),
+    })
+      .then((res) => {
+        if (res.ok) {
+          strapi.log.info(
+            `[Webhook] ${platform}: ${site.build_webhook} -> ${res.status}`,
+          )
+        } else {
+          strapi.log.warn(
+            `[Webhook] ${platform}: ${site.build_webhook} -> ${res.status} ${res.statusText}`,
+          )
+        }
+      })
+      .catch((err: unknown) => {
+        const message = err instanceof Error ? err.message : String(err)
+        strapi.log.error(
+          `[Webhook] Failed: ${site.build_webhook} | ${message}`,
+        )
+      })
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : String(error)
-    strapi.log.error(`[Webhook] Failed for ${uid}::${documentId}: ${message}`)
+    strapi.log.error(`[Webhook] Error for ${uid}::${documentId}: ${message}`)
   }
 }

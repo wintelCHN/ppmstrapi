@@ -32,6 +32,38 @@
     },
     "twitterUsername": {
       "type": "string"
+    },
+    "canonicalOverride": {
+      "type": "string",
+      "required": false
+    },
+    "noindex": {
+      "type": "boolean",
+      "default": false,
+      "required": false
+    },
+    "nofollow": {
+      "type": "boolean",
+      "default": false,
+      "required": false
+    },
+    "ogTitleOverride": {
+      "type": "string",
+      "required": false
+    },
+    "ogDescriptionOverride": {
+      "type": "text",
+      "required": false
+    },
+    "articleSection": {
+      "type": "string",
+      "required": false
+    },
+    "priority": {
+      "type": "decimal",
+      "required": false,
+      "min": 0.0,
+      "max": 1.0
     }
   }
 }

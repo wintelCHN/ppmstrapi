@@ -1,0 +1,20 @@
+{
+  "collectionName": "components_elements_article_metas",
+  "info": {
+    "name": "ArticleMeta",
+    "displayName": "Article Meta",
+    "icon": "newspaper",
+    "description": "Structured data fields for Article/NewsArticle schema (JSON-LD)"
+  },
+  "options": {},
+  "attributes": {
+    "author": {
+      "type": "string",
+      "required": false
+    },
+    "wordCount": {
+      "type": "integer",
+      "required": false
+    }
+  }
+}

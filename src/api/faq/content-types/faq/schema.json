@@ -1,12 +1,12 @@
 {
   "kind": "collectionType",
-  "collectionName": "blogs",
+  "collectionName": "faqs",
   "info": {
-    "singularName": "blog",
-    "pluralName": "blogs",
-    "displayName": "Blog",
-    "name": "blog",
-    "description": "Blog articles with i18n support"
+    "singularName": "faq",
+    "pluralName": "faqs",
+    "displayName": "FAQ",
+    "name": "faq",
+    "description": "Standalone FAQ pages with schema.org FAQPage markup support"
   },
   "options": {
     "draftAndPublish": true
@@ -19,6 +19,7 @@
   "attributes": {
     "title": {
       "type": "string",
+      "required": true,
       "pluginOptions": {
         "i18n": {
           "localized": true
@@ -26,20 +27,19 @@
         "translate": {
           "translate": "translate"
         }
-      },
-      "required": true
+      }
     },
     "slug": {
       "type": "uid",
+      "targetField": "title",
       "pluginOptions": {
         "i18n": {
           "localized": false
         }
-      },
-      "targetField": "title"
+      }
     },
-    "featured_image": {
-      "type": "media",
+    "description": {
+      "type": "text",
       "pluginOptions": {
         "i18n": {
           "localized": true
@@ -47,14 +47,35 @@
         "translate": {
           "translate": "translate"
         }
-      },
-      "multiple": false,
-      "allowedTypes": [
-        "images"
-      ]
+      }
+    },
+    "items": {
+      "type": "component",
+      "repeatable": true,
+      "component": "elements.faq-item",
+      "required": true,
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        },
+        "translate": {
+          "translate": "translate"
+        }
+      }
+    },
+    "category": {
+      "type": "string",
+      "pluginOptions": {
+        "i18n": {
+          "localized": false
+        }
+      }
     },
     "metadata": {
       "type": "component",
+      "repeatable": false,
+      "component": "meta.metadata",
+      "required": false,
       "pluginOptions": {
         "i18n": {
           "localized": true
@@ -62,29 +83,12 @@
         "translate": {
           "translate": "translate"
         }
-      },
-      "component": "meta.metadata",
-      "repeatable": false,
-      "required": false
+      }
     },
     "status": {
       "type": "enumeration",
-      "pluginOptions": {
-        "i18n": {
-          "localized": false
-        }
-      },
+      "enum": ["draft", "published"],
       "default": "draft",
-      "enum": [
-        "draft",
-        "published"
-      ]
-    },
-    "article_meta": {
-      "type": "component",
-      "repeatable": false,
-      "component": "elements.article-meta",
-      "required": false,
       "pluginOptions": {
         "i18n": {
           "localized": false
@@ -96,18 +100,6 @@
       "relation": "manyToOne",
       "target": "api::site.site",
       "pluginOptions": {
-        "translate": {
-          "translate": "translate"
-        }
-      },
-      "inversedBy": "blogs"
-    },
-    "content": {
-      "type": "richtext",
-      "pluginOptions": {
-        "i18n": {
-          "localized": true
-        },
         "translate": {
           "translate": "translate"
         }

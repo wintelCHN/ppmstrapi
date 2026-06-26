@@ -1,0 +1,42 @@
+{
+  "collectionName": "components_elements_product_schemas",
+  "info": {
+    "name": "ProductSchema",
+    "displayName": "Product Schema",
+    "icon": "shopping-cart",
+    "description": "Structured data fields for Product schema (JSON-LD)"
+  },
+  "options": {},
+  "attributes": {
+    "brand": {
+      "type": "string",
+      "required": false
+    },
+    "gtin": {
+      "type": "string",
+      "required": false
+    },
+    "mpn": {
+      "type": "string",
+      "required": false
+    },
+    "availability": {
+      "type": "enumeration",
+      "enum": ["InStock", "OutOfStock", "PreOrder", "BackOrder"],
+      "default": "InStock",
+      "required": false
+    },
+    "priceValidUntil": {
+      "type": "date",
+      "required": false
+    },
+    "aggregateRating": {
+      "type": "json",
+      "required": false
+    },
+    "shippingDetails": {
+      "type": "json",
+      "required": false
+    }
+  }
+}

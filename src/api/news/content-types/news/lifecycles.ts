@@ -19,7 +19,7 @@ export default {
   async afterUpdate(event: any) {
     const documentId = event?.params?.documentId
     if (documentId) {
-      await logBuildWebhook(strapi, 'api::news.news', documentId)
+      logBuildWebhook(strapi, 'api::news.news', documentId)
     }
   },
 }

@@ -88,7 +88,8 @@
         "sections.comparison-table",
         "sections.statistics",
         "sections.cta-banner",
-        "shared.related-products"
+        "shared.related-products",
+        "shared.faq-reference"
       ]
     },
     "site": {

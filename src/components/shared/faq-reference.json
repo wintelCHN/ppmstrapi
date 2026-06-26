@@ -1,0 +1,28 @@
+{
+  "collectionName": "components_shared_faq_references",
+  "info": {
+    "name": "FAQ Reference",
+    "displayName": "FAQ Reference",
+    "icon": "question-circle",
+    "description": "Reference an existing FAQ content type — display inline or link to standalone page"
+  },
+  "options": {},
+  "attributes": {
+    "faq": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::faq.faq"
+    },
+    "display_mode": {
+      "type": "enumeration",
+      "enum": ["inline", "linked"],
+      "default": "inline"
+    },
+    "max_items": {
+      "type": "integer",
+      "default": 10,
+      "min": 1,
+      "max": 50
+    }
+  }
+}
