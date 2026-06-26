@@ -667,6 +667,30 @@ export interface SectionsTestimonialsGroup extends Struct.ComponentSchema {
   };
 }
 
+export interface SharedFaqReference extends Struct.ComponentSchema {
+  collectionName: 'components_shared_faq_references';
+  info: {
+    description: 'Reference an existing FAQ content type \u2014 display inline or link to standalone page';
+    displayName: 'FAQ Reference';
+    icon: 'question-circle';
+    name: 'FAQ Reference';
+  };
+  attributes: {
+    display_mode: Schema.Attribute.Enumeration<['inline', 'linked']> &
+      Schema.Attribute.DefaultTo<'inline'>;
+    faq: Schema.Attribute.Relation<'manyToOne', 'api::faq.faq'>;
+    max_items: Schema.Attribute.Integer &
+      Schema.Attribute.SetMinMax<
+        {
+          max: 50;
+          min: 1;
+        },
+        number
+      > &
+      Schema.Attribute.DefaultTo<10>;
+  };
+}
+
 export interface SharedRelatedProducts extends Struct.ComponentSchema {
   collectionName: 'components_shared_related_products';
   info: {
@@ -750,6 +774,7 @@ declare module '@strapi/strapi' {
       'sections.rich-text': SectionsRichText;
       'sections.statistics': SectionsStatistics;
       'sections.testimonials-group': SectionsTestimonialsGroup;
+      'shared.faq-reference': SharedFaqReference;
       'shared.related-products': SharedRelatedProducts;
     }
   }
