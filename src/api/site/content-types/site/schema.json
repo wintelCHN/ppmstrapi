@@ -70,14 +70,11 @@
     "astro_project_name": {
       "type": "string"
     },
-    "seo_default_title": {
-      "type": "string"
-    },
-    "seo_default_description": {
-      "type": "text"
-    },
-    "seo_default_keywords": {
-      "type": "text"
+    "metadata": {
+      "type": "component",
+      "repeatable": false,
+      "component": "meta.metadata",
+      "required": false
     },
     "notes": {
       "type": "blocks"

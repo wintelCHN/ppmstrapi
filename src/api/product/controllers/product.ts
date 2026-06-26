@@ -202,13 +202,25 @@ export default factories.createCoreController('api::product.product', ({ strapi 
         : []
       delete productData.imageUrls
 
+      // ── Normalize SEO: accept both flat fields (old n8n) and nested metadata (new n8n) ──
+      if (!productData.metadata) {
+        productData.metadata = {
+          metaTitle: productData.seo_title ?? productData.name ?? '',
+          metaDescription: productData.seo_description ?? '',
+          metaKeywords: productData.seo_keywords ?? '',
+        }
+      }
+      delete productData.seo_title
+      delete productData.seo_description
+      delete productData.seo_keywords
+
       // ── Dedup: check source_url before creating ───────────────────
       // Prevents duplicate products when sheet update fails & retries
       if (productData.source_url) {
         const existing = await strapi.documents('api::product.product').findMany({
           filters: { source_url: productData.source_url },
           limit: 1,
-          populate: ['images', 'site', 'category', 'tags'],
+          populate: ['images', 'metadata', 'site', 'category', 'tags'],
         })
         if (existing && existing.length > 0) {
           strapi.log.info(
@@ -227,7 +239,7 @@ export default factories.createCoreController('api::product.product', ({ strapi 
       // ── Step 1: Create the product entry ────────────────────────────
       const product = await strapi.documents('api::product.product').create({
         data: productData as any,
-        populate: ['images'],
+        populate: ['images', 'metadata'],
       })
 
       strapi.log.info(
@@ -424,7 +436,7 @@ export default factories.createCoreController('api::product.product', ({ strapi 
       // ── Step 3: Return the product with its associated images ────────
       const populated = await strapi.documents('api::product.product').findOne({
         documentId: product.documentId,
-        populate: ['images', 'site', 'category', 'tags'],
+        populate: ['images', 'metadata', 'site', 'category', 'tags'],
       })
 
       ctx.status = 201

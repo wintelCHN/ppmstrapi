@@ -18,9 +18,6 @@ const LOCALIZED_FIELDS = [
   'short_description',
   'Specification',
   'description',
-  'seo_title',
-  'seo_description',
-  'seo_keywords',
 ]
 
 function slugify(text: string): string {
@@ -108,6 +105,33 @@ async function copyLocalizedFromEn(
     for (const field of LOCALIZED_FIELDS) {
       if (isEmpty(data[field]) && hasValue(enProduct[field])) {
         data[field] = enProduct[field]
+      }
+    }
+
+    // Copy metadata component from EN when empty
+    const hasMetadata = data.metadata && (
+      hasValue(data.metadata.metaTitle) || hasValue(data.metadata.metaDescription)
+    )
+    if (!hasMetadata && enProduct.id) {
+      try {
+        const enWithMeta = await strapi.documents('api::product.product').findOne({
+          documentId,
+          locale: 'en',
+          populate: ['metadata'],
+        })
+        if (enWithMeta?.metadata) {
+          data.metadata = {
+            metaTitle: enWithMeta.metadata.metaTitle ?? '',
+            metaDescription: enWithMeta.metadata.metaDescription ?? '',
+            metaKeywords: (enWithMeta.metadata as any).metaKeywords ?? '',
+            shareImage: enWithMeta.metadata.shareImage ?? null,
+            twitterCardType: enWithMeta.metadata.twitterCardType ?? 'summary',
+            twitterUsername: enWithMeta.metadata.twitterUsername ?? '',
+          }
+        }
+      } catch (metaErr: unknown) {
+        const msg = metaErr instanceof Error ? metaErr.message : String(metaErr)
+        strapi.log.warn(`[Product i18n] Could not copy metadata from EN: ${msg}`)
       }
     }
   } catch (err: unknown) {

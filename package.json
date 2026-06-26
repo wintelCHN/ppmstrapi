@@ -10,7 +10,8 @@
     "prestart": "node scripts/ensure-sequences.js",
     "postinstall": "node scripts/setup-translate-provider.js",
     "migrate-tags": "node scripts/migrate-tags.js",
-    "migrate-to-r2": "node scripts/migrate-to-r2.js"
+    "migrate-to-r2": "node scripts/migrate-to-r2.js",
+    "migrate-seo-to-component": "node scripts/migrate-seo-to-component.js"
   },
   "dependencies": {
     "@strapi/plugin-graphql": "^5.0.0",

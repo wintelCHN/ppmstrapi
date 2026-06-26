@@ -55,24 +55,11 @@
         }
       }
     },
-    "seo_title": {
-      "type": "string",
-      "pluginOptions": {
-        "i18n": {
-          "localized": true
-        }
-      }
-    },
-    "seo_description": {
-      "type": "text",
-      "pluginOptions": {
-        "i18n": {
-          "localized": true
-        }
-      }
-    },
-    "seo_keywords": {
-      "type": "text",
+    "metadata": {
+      "type": "component",
+      "repeatable": false,
+      "component": "meta.metadata",
+      "required": false,
       "pluginOptions": {
         "i18n": {
           "localized": true

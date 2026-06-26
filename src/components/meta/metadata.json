@@ -15,6 +15,10 @@
       "type": "text",
       "required": true
     },
+    "metaKeywords": {
+      "type": "text",
+      "required": false
+    },
     "shareImage": {
       "allowedTypes": ["images"],
       "type": "media",
