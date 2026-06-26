@@ -115,5 +115,61 @@ export default {
 
   bootstrap(app: StrapiApp) {
     console.log(app);
+
+    // ── Social Link: dynamic URL placeholder based on platform ──
+    const PLATFORM_URLS: Record<string, string> = {
+      X: 'https://x.com/xxxxx',
+      linkedin: 'https://linkedin.com/in/xxxxx',
+      facebook: 'https://facebook.com/xxxxx',
+      instagram: 'https://instagram.com/xxxxx',
+      youtube: 'https://youtube.com/@xxxxx',
+      tiktok: 'https://tiktok.com/@xxxxx',
+      whatsapp: 'https://wa.me/xxxxx',
+      website: 'https://www.xxxxx.com',
+    };
+
+    /** Update the URL placeholder for a single social_links row */
+    function syncUrlPlaceholder(index: number | string) {
+      // Strapi 5 repeatable component field names: social_links.N.platform / social_links.N.url
+      const platformEl = document.querySelector<
+        HTMLInputElement | HTMLSelectElement
+      >(`[name="social_links.${index}.platform"]`);
+      const urlEl = document.querySelector<HTMLInputElement>(
+        `[name="social_links.${index}.url"]`
+      );
+      if (platformEl && urlEl) {
+        const platform = platformEl.value;
+        urlEl.placeholder = PLATFORM_URLS[platform] || 'https://';
+      }
+    }
+
+    /** Sync all existing social_links rows (initial load + after add/remove) */
+    function syncAllUrlPlaceholders() {
+      const platformInputs = document.querySelectorAll<
+        HTMLInputElement | HTMLSelectElement
+      >('[name$=".platform"]');
+      platformInputs.forEach((el) => {
+        const match = el.name.match(/^social_links\.(\d+)\.platform$/);
+        if (match) syncUrlPlaceholder(match[1]);
+      });
+    }
+
+    // 1) Change delegation — fires when user picks a different platform
+    document.addEventListener('change', (e: Event) => {
+      const target = e.target as HTMLInputElement | HTMLSelectElement;
+      const match = target?.name?.match(
+        /^social_links\.(\d+)\.platform$/
+      );
+      if (match) syncUrlPlaceholder(match[1]);
+    });
+
+    // 2) MutationObserver — fires when CM form renders or rows are added/removed
+    const observer = new MutationObserver(() => {
+      syncAllUrlPlaceholders();
+    });
+    observer.observe(document.body, { childList: true, subtree: true });
+
+    // 3) Initial sync (CM edit view may already be in DOM)
+    syncAllUrlPlaceholders();
   },
 };

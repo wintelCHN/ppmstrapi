@@ -19,7 +19,6 @@
   "attributes": {
     "name": {
       "type": "string",
-      "required": true,
       "pluginOptions": {
         "i18n": {
           "localized": true
@@ -27,31 +26,33 @@
         "translate": {
           "translate": "translate"
         }
-      }
+      },
+      "required": true
     },
     "slug": {
       "type": "uid",
-      "targetField": "name",
       "pluginOptions": {
         "i18n": {
           "localized": false
         }
-      }
+      },
+      "targetField": "name"
     },
     "avatar": {
       "type": "media",
-      "multiple": false,
-      "required": false,
-      "allowedTypes": ["images"],
       "pluginOptions": {
         "i18n": {
           "localized": false
         }
-      }
+      },
+      "multiple": false,
+      "required": false,
+      "allowedTypes": [
+        "images"
+      ]
     },
     "bio": {
       "type": "blocks",
-      "required": false,
       "pluginOptions": {
         "i18n": {
           "localized": true
@@ -59,7 +60,8 @@
         "translate": {
           "translate": "translate"
         }
-      }
+      },
+      "required": false
     },
     "role": {
       "type": "string",
@@ -82,20 +84,54 @@
     },
     "social_links": {
       "type": "component",
-      "repeatable": true,
-      "component": "elements.social-link",
-      "required": false,
       "pluginOptions": {
         "i18n": {
           "localized": false
         }
-      }
+      },
+      "component": "elements.social-link",
+      "repeatable": true,
+      "required": false
     },
     "metadata": {
       "type": "component",
-      "repeatable": false,
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        },
+        "translate": {
+          "translate": "translate"
+        }
+      },
       "component": "meta.metadata",
-      "required": false,
+      "repeatable": false,
+      "required": false
+    },
+    "status": {
+      "type": "enumeration",
+      "pluginOptions": {
+        "i18n": {
+          "localized": false
+        }
+      },
+      "default": "draft",
+      "enum": [
+        "draft",
+        "published"
+      ]
+    },
+    "site": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::site.site",
+      "pluginOptions": {
+        "translate": {
+          "translate": "translate"
+        }
+      }
+    },
+    "profile": {
+      "type": "richtext",
       "pluginOptions": {
         "i18n": {
           "localized": true
@@ -105,21 +141,12 @@
         }
       }
     },
-    "status": {
-      "type": "enumeration",
-      "enum": ["draft", "published"],
-      "default": "draft",
+    "wechat": {
+      "type": "string",
       "pluginOptions": {
         "i18n": {
-          "localized": false
-        }
-      }
-    },
-    "site": {
-      "type": "relation",
-      "relation": "manyToOne",
-      "target": "api::site.site",
-      "pluginOptions": {
+          "localized": true
+        },
         "translate": {
           "translate": "translate"
         }

@@ -503,6 +503,15 @@ export interface ApiAuthorAuthor extends Struct.CollectionTypeSchema {
           translate: 'translate';
         };
       }>;
+    profile: Schema.Attribute.RichText &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+        translate: {
+          translate: 'translate';
+        };
+      }>;
     publishedAt: Schema.Attribute.DateTime;
     role: Schema.Attribute.String &
       Schema.Attribute.SetPluginOptions<{
@@ -541,6 +550,15 @@ export interface ApiAuthorAuthor extends Struct.CollectionTypeSchema {
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
+    wechat: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+        translate: {
+          translate: 'translate';
+        };
+      }>;
   };
 }
 

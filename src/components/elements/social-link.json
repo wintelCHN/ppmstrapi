@@ -10,13 +10,14 @@
   "attributes": {
     "platform": {
       "type": "enumeration",
-      "enum": ["twitter", "linkedin", "facebook", "instagram", "youtube", "tiktok", "website"],
+      "enum": ["X", "linkedin", "facebook", "instagram", "youtube", "tiktok", "whatsapp", "website"],
       "required": true
     },
     "url": {
       "type": "string",
       "required": true,
-      "regex": "^https?://.+"
+      "regex": "^https?://.+",
+      "placeholder": "Select a platform first — URL template will appear here"
     }
   }
 }

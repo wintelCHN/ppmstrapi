@@ -226,11 +226,19 @@ export interface ElementsSocialLink extends Struct.ComponentSchema {
   };
   attributes: {
     platform: Schema.Attribute.Enumeration<
-      ['twitter', 'linkedin', 'facebook', 'instagram', 'youtube', 'tiktok', 'website']
+      [
+        'X',
+        'linkedin',
+        'facebook',
+        'instagram',
+        'youtube',
+        'tiktok',
+        'whatsapp',
+        'website',
+      ]
     > &
       Schema.Attribute.Required;
-    url: Schema.Attribute.String &
-      Schema.Attribute.Required;
+    url: Schema.Attribute.String & Schema.Attribute.Required;
   };
 }
 
