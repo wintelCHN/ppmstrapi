@@ -216,6 +216,24 @@ export interface ElementsProductSchema extends Struct.ComponentSchema {
   };
 }
 
+export interface ElementsSocialLink extends Struct.ComponentSchema {
+  collectionName: 'components_elements_social_links';
+  info: {
+    description: 'Social media platform link for author profiles';
+    displayName: 'Social Link';
+    icon: 'globe';
+    name: 'social-link';
+  };
+  attributes: {
+    platform: Schema.Attribute.Enumeration<
+      ['twitter', 'linkedin', 'facebook', 'instagram', 'youtube', 'tiktok', 'website']
+    > &
+      Schema.Attribute.Required;
+    url: Schema.Attribute.String &
+      Schema.Attribute.Required;
+  };
+}
+
 export interface ElementsStatisticItem extends Struct.ComponentSchema {
   collectionName: 'components_elements_statistic_items';
   info: {
@@ -751,6 +769,7 @@ declare module '@strapi/strapi' {
       'elements.organization': ElementsOrganization;
       'elements.plan': ElementsPlan;
       'elements.product-schema': ElementsProductSchema;
+      'elements.social-link': ElementsSocialLink;
       'elements.statistic-item': ElementsStatisticItem;
       'elements.testimonial': ElementsTestimonial;
       'layout.nav-item': LayoutNavItem;

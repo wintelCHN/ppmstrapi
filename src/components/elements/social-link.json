@@ -1,0 +1,22 @@
+{
+  "collectionName": "components_elements_social_links",
+  "info": {
+    "name": "social-link",
+    "displayName": "Social Link",
+    "icon": "globe",
+    "description": "Social media platform link for author profiles"
+  },
+  "options": {},
+  "attributes": {
+    "platform": {
+      "type": "enumeration",
+      "enum": ["twitter", "linkedin", "facebook", "instagram", "youtube", "tiktok", "website"],
+      "required": true
+    },
+    "url": {
+      "type": "string",
+      "required": true,
+      "regex": "^https?://.+"
+    }
+  }
+}

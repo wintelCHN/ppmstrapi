@@ -525,7 +525,7 @@ export interface ApiAuthorAuthor extends Struct.CollectionTypeSchema {
           localized: false;
         };
       }>;
-    social_links: Schema.Attribute.JSON &
+    social_links: Schema.Attribute.Component<'elements.social-link', true> &
       Schema.Attribute.SetPluginOptions<{
         i18n: {
           localized: false;

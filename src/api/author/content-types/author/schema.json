@@ -81,7 +81,10 @@
       }
     },
     "social_links": {
-      "type": "json",
+      "type": "component",
+      "repeatable": true,
+      "component": "elements.social-link",
+      "required": false,
       "pluginOptions": {
         "i18n": {
           "localized": false
