@@ -17,49 +17,63 @@
     }
   },
   "attributes": {
-    "shortName": {
+    "page_title": {
       "type": "string",
       "pluginOptions": {
         "i18n": {
           "localized": true
+        },
+        "translate": {
+          "translate": "translate"
         }
       }
     },
     "slug": {
       "type": "string",
-      "regex": "^$|^[a-zA-Z/-]+$",
       "pluginOptions": {
         "i18n": {
           "localized": false
         }
-      }
+      },
+      "regex": "^$|^[a-zA-Z/-]+$"
     },
     "status": {
       "type": "enumeration",
-      "enum": [
-        "draft",
-        "published"
-      ],
-      "default": "draft",
       "pluginOptions": {
         "i18n": {
           "localized": false
         }
-      }
+      },
+      "default": "draft",
+      "enum": [
+        "draft",
+        "published"
+      ]
     },
     "metadata": {
       "type": "component",
-      "repeatable": false,
-      "component": "meta.metadata",
-      "required": true,
       "pluginOptions": {
         "i18n": {
           "localized": true
+        },
+        "translate": {
+          "translate": "translate"
         }
-      }
+      },
+      "component": "meta.metadata",
+      "repeatable": false,
+      "required": true
     },
     "contentSections": {
       "type": "dynamiczone",
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        },
+        "translate": {
+          "translate": "translate"
+        }
+      },
       "components": [
         "sections.hero",
         "sections.bottom-actions",
@@ -75,24 +89,65 @@
         "sections.statistics",
         "sections.cta-banner",
         "shared.related-products"
-      ],
-      "pluginOptions": {
-        "i18n": {
-          "localized": true
-        }
-      }
+      ]
     },
     "site": {
       "type": "relation",
       "relation": "manyToOne",
       "target": "api::site.site",
+      "pluginOptions": {
+        "translate": {
+          "translate": "translate"
+        }
+      },
       "inversedBy": "pages"
     },
     "keyword_cluster": {
       "type": "relation",
       "relation": "manyToOne",
       "target": "api::keyword-cluster.keyword-cluster",
+      "pluginOptions": {
+        "translate": {
+          "translate": "translate"
+        }
+      },
       "inversedBy": "pages"
+    },
+    "page_banner": {
+      "type": "media",
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        },
+        "translate": {
+          "translate": "translate"
+        }
+      },
+      "multiple": false,
+      "allowedTypes": [
+        "images",
+        "files",
+        "videos",
+        "audios"
+      ]
+    },
+    "page_cover": {
+      "type": "media",
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        },
+        "translate": {
+          "translate": "translate"
+        }
+      },
+      "multiple": false,
+      "allowedTypes": [
+        "images",
+        "files",
+        "videos",
+        "audios"
+      ]
     }
   }
 }
