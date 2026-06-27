@@ -24,6 +24,51 @@ function reject(ctx: any, status: number, message: string) {
   ctx.body = { data: null, error: { message, status } }
 }
 
+function deriveImageAltText(rawValue: unknown): string {
+  if (typeof rawValue !== 'string') return ''
+
+  // Strip common B2B SEO fluff and keep a short product-centric alt text.
+  const cleaned = rawValue
+    .replace(/[_-]+/g, ' ')
+    .replace(
+      /\b(manufacturer|factory|supplier|exporter|wholesale|bulk|b2b|distributor|custom|oem|odm|private label|china|chinese|in china)\b/gi,
+      ' ',
+    )
+    .replace(/\s+/g, ' ')
+    .trim()
+
+  return cleaned.slice(0, 120).trim()
+}
+
+function normalizeUploadResult(uploadResult: unknown): Array<Record<string, any>> {
+  if (Array.isArray(uploadResult)) {
+    return uploadResult.filter((file): file is Record<string, any> => !!file && typeof file === 'object')
+  }
+
+  if (uploadResult && typeof uploadResult === 'object') {
+    return [uploadResult as Record<string, any>]
+  }
+
+  return []
+}
+
+async function backfillAlternativeText(
+  strapi: any,
+  uploadResult: unknown,
+  alternativeText: string,
+) {
+  if (!alternativeText) return
+
+  for (const file of normalizeUploadResult(uploadResult)) {
+    if (!file.id || file.alternativeText) continue
+
+    await strapi.db.query('plugin::upload.file').update({
+      where: { id: file.id },
+      data: { alternativeText },
+    })
+  }
+}
+
 /**
  * Verify a Bearer token as either an Admin JWT, a Strapi API Token,
  * or the ADMIN_JWT_SECRET shared secret.
@@ -140,7 +185,7 @@ export default factories.createCoreController('api::product.product', ({ strapi 
    *     Content-Type: application/json
    *     Body: { name, price, ..., imageBase64: [
    *       { filename: "img_0.jpg", data: "<base64>", mimetype: "image/jpeg" }
-   *     ]}
+   *     ], imageAltText?: "Core product keyword" }
    *     → n8n downloads images via BrightData, base64-encodes, Strapi
    *       decodes and uploads to R2. No Railway → Alibaba direct requests.
    *
@@ -201,6 +246,10 @@ export default factories.createCoreController('api::product.product', ({ strapi 
           )
         : []
       delete productData.imageUrls
+
+      const imageAltText = deriveImageAltText(productData.imageAltText ?? productData.altText ?? productData.name)
+      delete productData.imageAltText
+      delete productData.altText
 
       // ── Normalize SEO: accept both flat fields (old n8n) and nested metadata (new n8n) ──
       if (!productData.metadata) {
@@ -282,11 +331,12 @@ export default factories.createCoreController('api::product.product', ({ strapi 
 
             fs.writeFileSync(tmpPath, buf)
 
-            await uploadService.upload({
+            const uploadResult = await uploadService.upload({
               data: {
                 ref: 'api::product.product',
                 refId: product.id,
                 field: 'images',
+                ...(imageAltText ? { fileInfo: { alternativeText: imageAltText } } : {}),
               },
               files: {
                 filepath: tmpPath,
@@ -295,6 +345,8 @@ export default factories.createCoreController('api::product.product', ({ strapi 
                 size: buf.length,
               },
             })
+
+            await backfillAlternativeText(strapi, uploadResult, imageAltText)
 
             imageResults.push({ filename: img.filename, ok: true })
             strapi.log.info(
@@ -369,11 +421,12 @@ export default factories.createCoreController('api::product.product', ({ strapi 
 
             fs.writeFileSync(tmpPath, buffer)
 
-            await uploadService.upload({
+            const uploadResult = await uploadService.upload({
               data: {
                 ref: 'api::product.product',
                 refId: product.id,
                 field: 'images',
+                ...(imageAltText ? { fileInfo: { alternativeText: imageAltText } } : {}),
               },
               files: {
                 filepath: tmpPath,
@@ -382,6 +435,8 @@ export default factories.createCoreController('api::product.product', ({ strapi 
                 size: buffer.length,
               },
             })
+
+            await backfillAlternativeText(strapi, uploadResult, imageAltText)
 
             imageResults.push({ url: imageUrl, ok: true })
             strapi.log.info(
@@ -422,14 +477,17 @@ export default factories.createCoreController('api::product.product', ({ strapi 
           )
           for (const file of imageFiles) {
             try {
-              await uploadService.upload({
+              const uploadResult = await uploadService.upload({
                 data: {
                   ref: 'api::product.product',
                   refId: product.id,
                   field: 'images',
+                  ...(imageAltText ? { fileInfo: { alternativeText: imageAltText } } : {}),
                 },
                 files: file,
               })
+
+              await backfillAlternativeText(strapi, uploadResult, imageAltText)
             } catch (uploadErr: unknown) {
               const msg = uploadErr instanceof Error ? uploadErr.message : String(uploadErr)
               strapi.log.error(
