@@ -1,5 +1,7 @@
 import type { Core } from '@strapi/strapi';
 
+const MAX_UPLOAD_FILE_SIZE = 500 * 1024 * 1024; // 500MB
+
 const config: Core.Config.Middlewares = [
   'strapi::logger',
   'strapi::errors',
@@ -53,6 +55,8 @@ const config: Core.Config.Middlewares = [
     config: {
       formidable: {
         maxFields: 5000,
+        maxFileSize: MAX_UPLOAD_FILE_SIZE,
+        maxTotalFileSize: MAX_UPLOAD_FILE_SIZE,
       },
     },
   },

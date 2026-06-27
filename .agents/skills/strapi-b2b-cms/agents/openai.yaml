@@ -1,0 +1,4 @@
+interface:
+  display_name: "Strapi B2B CMS"
+  short_description: "Project rules for this Strapi 5 B2B CMS stack."
+  default_prompt: "Use $strapi-b2b-cms to work safely inside this Strapi B2B CMS project."

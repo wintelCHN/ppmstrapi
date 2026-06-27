@@ -6,6 +6,8 @@
  * - beforeUpdate: re-generates slug if name changed and slug is empty.
  */
 
+import { ensureMetadataPriority } from '../../../shared/metadata'
+
 // ── helpers ──────────────────────────────────────────────────────────────────
 
 function slugify(text: string): string {
@@ -61,6 +63,9 @@ export default {
   async beforeCreate(event: any) {
     const { data } = event.params
 
+    // Ensure metadata.priority defaults to 0.9
+    ensureMetadataPriority(data, 0.9)
+
     // Only generate if slug was not auto-filled by the UID type
     if (!data.slug || data.slug === '') {
       const name = extractName(data)
@@ -77,6 +82,9 @@ export default {
 
   async beforeUpdate(event: any) {
     const { data, where } = event.params
+
+    // Ensure metadata.priority defaults to 0.9
+    ensureMetadataPriority(data, 0.9)
 
     // Re-generate slug if name changed and slug is empty
     if (data.name) {

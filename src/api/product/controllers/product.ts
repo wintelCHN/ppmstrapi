@@ -214,13 +214,20 @@ export default factories.createCoreController('api::product.product', ({ strapi 
       delete productData.seo_description
       delete productData.seo_keywords
 
+      // ── Normalize product_schema: default brand if not provided ──
+      if (!productData.product_schema || typeof productData.product_schema !== 'object') {
+        productData.product_schema = { brand: 'PRONEO' }
+      } else if (!productData.product_schema.brand) {
+        productData.product_schema.brand = 'PRONEO'
+      }
+
       // ── Dedup: check source_url before creating ───────────────────
       // Prevents duplicate products when sheet update fails & retries
       if (productData.source_url) {
         const existing = await strapi.documents('api::product.product').findMany({
           filters: { source_url: productData.source_url },
           limit: 1,
-          populate: ['images', 'metadata', 'site', 'category', 'tags'],
+          populate: ['images', 'metadata', 'product_schema', 'site', 'category', 'tags'],
         })
         if (existing && existing.length > 0) {
           strapi.log.info(
@@ -239,7 +246,7 @@ export default factories.createCoreController('api::product.product', ({ strapi 
       // ── Step 1: Create the product entry ────────────────────────────
       const product = await strapi.documents('api::product.product').create({
         data: productData as any,
-        populate: ['images', 'metadata'],
+        populate: ['images', 'metadata', 'product_schema'],
       })
 
       strapi.log.info(
@@ -436,7 +443,7 @@ export default factories.createCoreController('api::product.product', ({ strapi 
       // ── Step 3: Return the product with its associated images ────────
       const populated = await strapi.documents('api::product.product').findOne({
         documentId: product.documentId,
-        populate: ['images', 'metadata', 'site', 'category', 'tags'],
+        populate: ['images', 'metadata', 'product_schema', 'site', 'category', 'tags'],
       })
 
       ctx.status = 201

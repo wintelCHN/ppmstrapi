@@ -9,6 +9,7 @@
  */
 
 import { logBuildWebhook } from '../../../shared/webhook'
+import { ensureMetadataPriority } from '../../../shared/metadata'
 
 // ── helpers ──────────────────────────────────────────────────────────────────
 
@@ -237,10 +238,13 @@ export default {
       strapi.log.error(`[Product Slug] Generation error: ${msg}`)
     }
 
-    // 3. Copy localized fields from EN when adding a new locale (rare edge-case)
+    // 3. Ensure metadata.priority defaults to 0.9
+    ensureMetadataPriority(data, 0.9)
+
+    // 4. Copy localized fields from EN when adding a new locale (rare edge-case)
     await copyLocalizedFromEn(strapi, data, data.documentId)
 
-    // 4. Tag migration bridge: resolve legacy JSON tags → Tag documents
+    // 5. Tag migration bridge: resolve legacy JSON tags → Tag documents
     if (Array.isArray(data.tags_json_deprecated) && data.tags_json_deprecated.length > 0) {
       const siteDocumentId =
         data.site?.documentId ??
@@ -264,6 +268,9 @@ export default {
     if (Object.prototype.hasOwnProperty.call(data, 'publishedAt')) {
       data.status = data.publishedAt === null ? 'draft' : 'published'
     }
+
+    // 0. Ensure metadata.priority defaults to 0.9
+    ensureMetadataPriority(data, 0.9)
 
     // 1. Re-generate slug only if name is explicitly being changed
     if (data.name && documentId) {

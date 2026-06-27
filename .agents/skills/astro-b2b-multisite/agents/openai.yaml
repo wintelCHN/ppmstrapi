@@ -1,0 +1,4 @@
+interface:
+  display_name: "Astro B2B Multisite"
+  short_description: "Rules for this Astro multi-site B2B frontend."
+  default_prompt: "Use $astro-b2b-multisite to work safely inside this Astro multi-site frontend project."

@@ -1,5 +1,7 @@
 import type { Core } from '@strapi/strapi';
 
+const MAX_UPLOAD_FILE_SIZE = 500 * 1024 * 1024; // 500MB
+
 const config = ({ env }: Core.Config.Shared.ConfigParams): Core.Config.Plugin => ({
   i18n: {
     enabled: true,
@@ -33,6 +35,7 @@ const config = ({ env }: Core.Config.Shared.ConfigParams): Core.Config.Plugin =>
   upload: {
     config: {
       provider: env('UPLOAD_PROVIDER', 'local'),
+      sizeLimit: MAX_UPLOAD_FILE_SIZE,
       providerOptions:
         env('UPLOAD_PROVIDER', 'local') === 'aws-s3'
           ? {

@@ -8,6 +8,7 @@
  */
 
 import { logBuildWebhook } from '../../../shared/webhook'
+import { ensureMetadataPriority } from '../../../shared/metadata'
 
 // ── helpers ──────────────────────────────────────────────────────────────────
 
@@ -66,6 +67,9 @@ export default {
   async beforeCreate(event: any) {
     const { data } = event.params
 
+    // Ensure metadata.priority defaults to 0.9
+    ensureMetadataPriority(data, 0.9)
+
     const name = extractShortName(data)
     if (name) {
       try {
@@ -83,6 +87,9 @@ export default {
   async beforeUpdate(event: any) {
     const { data, where } = event.params
     const documentId = where?.documentId
+
+    // 0. Ensure metadata.priority defaults to 0.9
+    ensureMetadataPriority(data, 0.9)
 
     // 1. Sync custom `status` with built-in Draft & Publish (publishedAt)
     if (Object.prototype.hasOwnProperty.call(data, 'publishedAt')) {

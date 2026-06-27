@@ -7,10 +7,17 @@
  */
 
 import { logBuildWebhook } from '../../../shared/webhook'
+import { ensureMetadataPriority } from '../../../shared/metadata'
 
 export default {
+  async beforeCreate(event: any) {
+    const { data } = event.params
+    ensureMetadataPriority(data, 0.5)
+  },
+
   async beforeUpdate(event: any) {
     const { data } = event.params
+    ensureMetadataPriority(data, 0.5)
     if (Object.prototype.hasOwnProperty.call(data, 'publishedAt')) {
       data.status = data.publishedAt === null ? 'draft' : 'published'
     }
