@@ -20,6 +20,41 @@ async function verifyToken(token: string, strapi: any): Promise<boolean> {
   if (token === adminSecret) return true
 
   try {
+    const contentApiTokenService = strapi.admin?.services?.['api-token-content-api']
+    if (contentApiTokenService?.hash && contentApiTokenService?.getByAccessKey) {
+      const apiToken = await contentApiTokenService.getByAccessKey(
+        contentApiTokenService.hash(token),
+      )
+
+      if (apiToken && (apiToken.kind === 'content-api' || apiToken.kind === null)) {
+        if (apiToken.expiresAt && new Date(apiToken.expiresAt) < new Date()) return false
+
+        if (apiToken.type === 'full-access') return true
+
+        if (apiToken.type === 'custom') {
+          const permissions = Array.isArray(apiToken.permissions) ? apiToken.permissions : []
+          return (
+            permissions.includes('api::blog.blog.create') &&
+            permissions.includes('api::blog.blog.update')
+          )
+        }
+      }
+    }
+  } catch {
+    // Fall through to admin-token and legacy lookup compatibility.
+  }
+
+  try {
+    const adminApiTokenService = strapi.admin?.services?.['api-token-admin']
+    if (adminApiTokenService?.authenticateAdminToken) {
+      const result = await adminApiTokenService.authenticateAdminToken(token)
+      if (result?.authenticated === true) return true
+    }
+  } catch {
+    // Fall through to the legacy lookup used by older project endpoints.
+  }
+
+  try {
     const apiTokenSalt = strapi.config.get('admin.apiToken.salt') as string
     if (!apiTokenSalt) return false
     if (token === apiTokenSalt) return true
