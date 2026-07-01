@@ -29,13 +29,23 @@
     "description": {
       "type": "text"
     },
-    "status": {
+    "lifecycle_state": {
       "type": "enumeration",
       "enum": [
+        "development",
         "active",
-        "inactive",
-        "development"
-      ]
+        "inactive"
+      ],
+      "default": "development",
+      "pluginOptions": {
+        "content-manager": {
+          "visible": false
+        }
+      }
+    },
+    "is_published": {
+      "type": "boolean",
+      "default": false
     },
     "primary_domain": {
       "type": "string"

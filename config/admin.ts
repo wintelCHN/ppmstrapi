@@ -18,7 +18,7 @@ const config = ({ env }: Core.Config.Shared.ConfigParams): Core.Config.Admin => 
     docLinks: env.bool('FLAG_DOC_LINKS', true),
   },
   watchIgnoreFiles: [
-    '**/astro_site/**',
+    '**/b2b_frontend/**',
     '**/dist/**',
     '**/node_modules/**',
     '**/.git/**',

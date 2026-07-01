@@ -96,6 +96,7 @@ logs
 results
 node_modules
 astro_site
+b2b_frontend
 .node_history
 
 ############################

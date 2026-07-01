@@ -43,6 +43,7 @@
     // Do not include Astro frontend sites (uses ESM import.meta)
     "exports/**",
     // Do not include Astro monorepo (Turborepo + Astro + ESM)
-    "astro_site/**"
+    "astro_site/**",
+    "b2b_frontend/**"
   ]
 }

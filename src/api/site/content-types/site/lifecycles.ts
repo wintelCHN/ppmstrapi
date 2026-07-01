@@ -4,17 +4,24 @@
  */
 export default {
   async beforeCreate(event: any) {
-    // Force status to "development" on every creation.
-    // Status is a system-managed field, not user-facing.
-    const { data } = event.params;
-    data.status = 'development';
+    // Force lifecycle_state to "development" on every creation.
+    // This is a system-managed field, hidden from the admin UI.
+    const { data } = event.params || {};
+    if (!data) return;
+    data.lifecycle_state = 'development';
   },
 
   async beforeUpdate(event: any) {
-    // Prevent status from being cleared during updates.
-    const { data } = event.params;
-    if (data.status === '' || data.status === null || data.status === undefined) {
-      delete data.status;
+    // Prevent lifecycle_state from being cleared during updates.
+    // is_published is user-controlled and left untouched.
+    const { data } = event.params || {};
+    if (!data) return;
+    if (
+      data.lifecycle_state === '' ||
+      data.lifecycle_state === null ||
+      data.lifecycle_state === undefined
+    ) {
+      delete data.lifecycle_state;
     }
   },
 };
