@@ -9,7 +9,7 @@ This skill captures the project-specific rules for the Strapi backend in this wo
 
 ## Quick Start
 
-1. Confirm the task stays inside `D:\www\b2bcms` and not `astro_site/`.
+1. Confirm the task stays inside `D:\www\b2bcms` and not `b2b_frontend/`.
 2. Read `git status --short` before editing and work around unrelated dirty files.
 3. Read only the relevant reference file for the task:
    - Read [references/project-map.md](D:/www/b2bcms/.agents/skills/strapi-b2b-cms/references/project-map.md) for repository boundaries, doc priority, content model map, and frontend coupling.
@@ -50,7 +50,7 @@ This skill captures the project-specific rules for the Strapi backend in this wo
 - Assume Strapi 5 flattened API responses and no `populate=deep`.
 - Keep changes scoped. Avoid editing `node_modules` or broad admin overrides when a local `src/admin` customization works.
 - Never copy secrets from `CLAUDE.md`, `.env`, or local config into skill files, docs, or commits.
-- Treat `astro_site/` as a separate Git repo and separate runtime.
+- Treat `b2b_frontend/` as a separate Git repo and separate runtime.
 
 ## Task Routing
 

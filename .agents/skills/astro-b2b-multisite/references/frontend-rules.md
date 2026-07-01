@@ -164,7 +164,7 @@ before changing build behavior.
 
 ## Validation Checklist
 
-- Run `pnpm build` from `astro_site` after shared package changes when feasible.
+- Run `pnpm build` from `b2b_frontend` after shared package changes when feasible.
 - For targeted work, build at least the affected app.
 - For package export changes, verify import paths still resolve.
 - For route or SEO work, inspect generated behavior, not just TypeScript.

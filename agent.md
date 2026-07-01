@@ -9,11 +9,11 @@
 这是一个面向 B2B 外贸营销获客的网站群系统。
 
 - 后端: Strapi 5 CE，位于 `D:\www\b2bcms`，负责产品、页面、导航、SEO、FAQ、线索等结构化内容管理。
-- 前端: Astro 5 monorepo，位于 `D:\www\b2bcms\astro_site`，用一套共享代码构建多个独立静态网站。
+- 前端: Astro 5 monorepo，位于 `D:\www\b2b_frontend`，用一套共享代码构建多个独立静态网站。
 - 后端部署: Railway，生产域名 `https://ppm.productsb2b.com`。
 - 前端部署: Vercel，每个 `apps/<site>` 是一个独立 Vercel 项目。
 - 图片存储: Cloudflare R2，前端通过 CDN URL 直接渲染。
-- 代码管理: Strapi 仓库和 Astro 仓库是两个 Git 仓库；`astro_site/` 已从 Strapi 仓库 `.gitignore` 排除。
+- 代码管理: Strapi 仓库和 Astro 仓库是两个 Git 仓库；`b2b_frontend/` 已从 Strapi 仓库 `.gitignore` 排除。
 
 核心原则:
 
@@ -54,13 +54,13 @@ D:\www\b2bcms
 ├── scripts/                # ensure-sequences、R2 迁移、标签迁移等脚本
 ├── database/migrations/    # SQL 迁移文件；Strapi 不会自动执行
 ├── docs/                   # 本地文档，不入 Strapi Git
-└── astro_site/             # Astro monorepo，独立 Git 仓库，不入 Strapi Git
+└── b2b_frontend/             # Astro monorepo，独立 Git 仓库，不入 Strapi Git
 ```
 
 Astro monorepo:
 
 ```text
-astro_site/
+b2b_frontend/
 ├── packages/
 │   ├── cms/                # @cms/client: Strapi API client、types、queries、site resolver、link index
 │   ├── ui/                 # @ui/components: layout、pages、sections、ui、SEO、schema、media
@@ -74,7 +74,7 @@ astro_site/
 重要边界:
 
 - 修改 Strapi 代码时在 `D:\www\b2bcms` 下运行 `npm`。
-- 修改 Astro 代码时在 `D:\www\b2bcms\astro_site` 下运行 `pnpm`。
+- 修改 Astro 代码时在 `D:\www\b2b_frontend` 下运行 `pnpm`。
 - 两个目录各有自己的 Git 状态，提交前必须分别检查。
 - 不要把 `.env`、`CLAUDE.md` 中的密钥、管理员密码、R2 Secret、数据库密码写入新文档或提交信息。
 
@@ -94,12 +94,12 @@ npm run migrate-tags
 Astro:
 
 ```powershell
-cd D:\www\b2bcms\astro_site
+cd D:\www\b2b_frontend
 pnpm dev
 pnpm build
 pnpm lint
 
-cd D:\www\b2bcms\astro_site\apps\proneofishing
+cd D:\www\b2b_frontend\apps\proneofishing
 pnpm dev             # 单站点本地开发
 ```
 
@@ -142,9 +142,9 @@ Strapi Page 的 `contentSections` 由 Astro `packages/ui/src/components/ui/Dynam
 
 - Strapi component schema: `src/components/.../*.json`
 - Page schema 的 `contentSections` 组件列表
-- Astro 类型: `astro_site/packages/cms/src/types.ts`
-- Astro section 组件: `astro_site/packages/ui/src/components/sections/*.astro`
-- Dynamic Zone 注册表: `astro_site/packages/ui/src/components/ui/DynamicZone.astro`
+- Astro 类型: `b2b_frontend/packages/cms/src/types.ts`
+- Astro section 组件: `b2b_frontend/packages/ui/src/components/sections/*.astro`
+- Dynamic Zone 注册表: `b2b_frontend/packages/ui/src/components/ui/DynamicZone.astro`
 - 相关页面或测试构建
 
 当前已注册的 section 包括:
@@ -333,7 +333,7 @@ npm run build
 Astro 变更:
 
 ```powershell
-cd D:\www\b2bcms\astro_site
+cd D:\www\b2b_frontend
 pnpm build
 ```
 
@@ -368,5 +368,5 @@ pnpm build
 - SiteLayout 已替代 Menu/Footer；Global 只做系统级 SEO fallback。
 - Product 的 `status` 和 Strapi 的 `publishedAt` 是两套状态，生产过滤必须同时考虑。
 - 自定义 Admin-only content-api 端点使用 `auth:false + 控制器内联验证`。
-- `astro_site/` 是独立仓库；在根仓库提交时不会包含它。
+- `b2b_frontend/` 是独立仓库；在根仓库提交时不会包含它。
 - 安全优先: 不传播密钥、不硬编码 token、不把本地私密文档内容原样复制到可提交文件。

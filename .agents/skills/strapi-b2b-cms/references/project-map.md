@@ -5,7 +5,7 @@
 This skill is for the Strapi backend repo at `D:\www\b2bcms`.
 
 - Strapi root: `D:\www\b2bcms`
-- Astro monorepo: `D:\www\b2bcms\astro_site`
+- Astro monorepo: `D:\www\b2b_frontend`
 - These are separate Git repos and separate runtime contexts.
 
 ## Document Priority
@@ -71,7 +71,7 @@ Do not revive deprecated models unless the user explicitly requests a reversal.
 
 ## Frontend Coupling
 
-Any Strapi-side change may require Astro-side updates in `astro_site`, especially for:
+Any Strapi-side change may require Astro-side updates in `b2b_frontend`, especially for:
 
 - Product or Page field additions
 - Dynamic Zone component changes
@@ -81,13 +81,13 @@ Any Strapi-side change may require Astro-side updates in `astro_site`, especiall
 
 Minimum Astro touchpoints for Dynamic Zone work:
 
-- `astro_site/packages/cms/src/types.ts`
-- `astro_site/packages/ui/src/components/sections/*`
-- `astro_site/packages/ui/src/components/ui/DynamicZone.astro`
+- `b2b_frontend/packages/cms/src/types.ts`
+- `b2b_frontend/packages/ui/src/components/sections/*`
+- `b2b_frontend/packages/ui/src/components/ui/DynamicZone.astro`
 
 ## Working Boundaries
 
 - Run Strapi commands with `npm` from `D:\www\b2bcms`.
-- Run Astro commands with `pnpm` from `D:\www\b2bcms\astro_site`.
+- Run Astro commands with `pnpm` from `D:\www\b2b_frontend`.
 - Do not leak `.env`, `CLAUDE.md`, or cloud/database/admin secrets into docs or generated files.
 - Expect dirty files in the repo and avoid reverting unrelated changes.

@@ -1,6 +1,6 @@
 ---
 name: astro-b2b-multisite
-description: Astro monorepo skill for this B2B multi-site frontend at D:\www\b2bcms\astro_site. Use when working on shared frontend packages, multi-app routing, packages/cms data access, packages/ui layouts and sections, Site slug filtering, SEO and JSON-LD output, Dynamic Zone rendering, theme integration, Vercel build rules, or Astro SSG behavior for this project.
+description: Astro monorepo skill for this B2B multi-site frontend at D:\www\b2b_frontend. Use when working on shared frontend packages, multi-app routing, packages/cms data access, packages/ui layouts and sections, Site slug filtering, SEO and JSON-LD output, Dynamic Zone rendering, theme integration, Vercel build rules, or Astro SSG behavior for this project.
 ---
 
 # Astro B2B Multisite
@@ -9,13 +9,13 @@ This skill captures the project-specific frontend rules for the Astro multi-site
 
 ## Quick Start
 
-1. Confirm the task is in `D:\www\b2bcms\astro_site`, not the Strapi root.
-2. Read `git status --short` inside `astro_site` before editing.
+1. Confirm the task is in `D:\www\b2b_frontend`, not the Strapi root.
+2. Read `git status --short` inside `b2b_frontend` before editing.
 3. Read only the relevant reference file:
    - Read [references/monorepo-map.md](D:/www/b2bcms/.agents/skills/astro-b2b-multisite/references/monorepo-map.md) for workspace layout, app/package ownership, route matrix, and deployment shape.
    - Read [references/frontend-rules.md](D:/www/b2bcms/.agents/skills/astro-b2b-multisite/references/frontend-rules.md) for data access, Site filter rules, SEO/SSG behavior, Dynamic Zone mapping, theme integration, and validation steps.
 4. Inspect the exact package or app files before changing behavior.
-5. Validate Astro changes from `D:\www\b2bcms\astro_site` with `pnpm build` or the relevant app/package build command.
+5. Validate Astro changes from `D:\www\b2b_frontend` with `pnpm build` or the relevant app/package build command.
 
 ## Default Workflow
 
@@ -60,7 +60,7 @@ This skill captures the project-specific frontend rules for the Astro multi-site
 
 ## Validation
 
-- Run `pnpm build` from `D:\www\b2bcms\astro_site` after shared frontend changes when feasible.
+- Run `pnpm build` from `D:\www\b2b_frontend` after shared frontend changes when feasible.
 - For app-specific work, validate at least the affected app build.
 - For route, SEO, or sitemap work, verify generated output behavior rather than relying only on type checks.
 - For data-shape changes, sanity-check the matching Strapi contracts in `packages/cms/src/types.ts`.
