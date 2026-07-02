@@ -86,6 +86,12 @@
       "component": "meta.metadata",
       "required": false
     },
+    "organization": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::organization.organization",
+      "inversedBy": "sites"
+    },
     "notes": {
       "type": "blocks"
     },

@@ -25,6 +25,7 @@ const PUBLIC_READ_CONTENT_TYPES: PermissionConfig[] = [
   { uid: 'api::tag.tag', actions: ['find', 'findOne'] },
   { uid: 'api::faq.faq', actions: ['find', 'findOne'] },
   { uid: 'api::author.author', actions: ['find', 'findOne'] },
+  { uid: 'api::organization.organization', actions: ['find', 'findOne'] },
 ]
 
 export async function bootstrap() {
