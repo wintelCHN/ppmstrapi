@@ -1,0 +1,12 @@
+allowBuilds:
+  '@apollo/protobufjs': true
+  '@swc/core': true
+  core-js-pure: true
+  esbuild: true
+  sharp: true
+
+# TODO: Remove this override once the dependency chain transitively requires emittery >= 0.13.1.
+# emittery@0.13.0 was published without ./maps.js, which breaks Strapi at runtime.
+# 0.13.1 includes the missing file. See: https://github.com/sindresorhus/emittery/issues/106
+overrides:
+  emittery: 0.13.1

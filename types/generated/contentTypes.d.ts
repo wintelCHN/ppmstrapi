@@ -1634,10 +1634,20 @@ export interface ApiSiteSite extends Struct.CollectionTypeSchema {
     description: Schema.Attribute.Text;
     github_branch: Schema.Attribute.String & Schema.Attribute.DefaultTo<'main'>;
     github_repo: Schema.Attribute.String;
+    is_published: Schema.Attribute.Boolean & Schema.Attribute.DefaultTo<false>;
     keyword_clusters: Schema.Attribute.Relation<
       'oneToMany',
       'api::keyword-cluster.keyword-cluster'
     >;
+    lifecycle_state: Schema.Attribute.Enumeration<
+      ['development', 'active', 'inactive']
+    > &
+      Schema.Attribute.SetPluginOptions<{
+        'content-manager': {
+          visible: false;
+        };
+      }> &
+      Schema.Attribute.DefaultTo<'development'>;
     locale: Schema.Attribute.String & Schema.Attribute.Private;
     localizations: Schema.Attribute.Relation<'oneToMany', 'api::site.site'> &
       Schema.Attribute.Private;
@@ -1657,7 +1667,6 @@ export interface ApiSiteSite extends Struct.CollectionTypeSchema {
     >;
     site_name: Schema.Attribute.String & Schema.Attribute.Required;
     slug: Schema.Attribute.UID;
-    status: Schema.Attribute.Enumeration<['active', 'inactive', 'development']>;
     tags: Schema.Attribute.Relation<'oneToMany', 'api::tag.tag'>;
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &

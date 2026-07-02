@@ -2,9 +2,9 @@
 
 ## Scope
 
-This skill is for the Astro frontend monorepo at `D:\www\b2b_frontend`.
+This skill is for the Astro frontend monorepo at `D:\www\b2bos\b2b_frontend`.
 
-- Workspace root: `D:\www\b2b_frontend`
+- Workspace root: `D:\www\b2bos\b2b_frontend`
 - Package manager: `pnpm`
 - Task runner: `turbo`
 - Deployment target: Vercel, one project per app
@@ -127,6 +127,6 @@ This means app-level changes can still be affected by shared-package breakage.
 
 ## Working Boundaries
 
-- Run frontend commands from `D:\www\b2b_frontend`.
+- Run frontend commands from `D:\www\b2bos\b2b_frontend`.
 - Keep Astro and Strapi repo states mentally separate.
 - Do not store secrets from `.env.local` or Vercel config in skill docs.

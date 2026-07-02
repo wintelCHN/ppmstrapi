@@ -1,76 +1,15 @@
 import { factories } from '@strapi/strapi'
-import jwt from 'jsonwebtoken'
-import crypto from 'crypto'
+import { verifyToken } from '../../shared/auth'
 
 function reject(ctx: any, status: number, message: string) {
   ctx.status = status
   ctx.body = { data: null, error: { message, status } }
 }
 
-async function verifyToken(token: string, strapi: any): Promise<boolean> {
-  const adminSecret = strapi.config.get('admin.auth.secret') as string
-
-  try {
-    jwt.verify(token, adminSecret)
-    return true
-  } catch {
-    // Not an admin JWT; continue with project-specific fallbacks.
-  }
-
-  if (token === adminSecret) return true
-
-  try {
-    const contentApiTokenService = strapi.admin?.services?.['api-token-content-api']
-    if (contentApiTokenService?.hash && contentApiTokenService?.getByAccessKey) {
-      const apiToken = await contentApiTokenService.getByAccessKey(
-        contentApiTokenService.hash(token),
-      )
-
-      if (apiToken && (apiToken.kind === 'content-api' || apiToken.kind === null)) {
-        if (apiToken.expiresAt && new Date(apiToken.expiresAt) < new Date()) return false
-
-        if (apiToken.type === 'full-access') return true
-
-        if (apiToken.type === 'custom') {
-          const permissions = Array.isArray(apiToken.permissions) ? apiToken.permissions : []
-          return (
-            permissions.includes('api::blog.blog.create') &&
-            permissions.includes('api::blog.blog.update')
-          )
-        }
-      }
-    }
-  } catch {
-    // Fall through to admin-token and legacy lookup compatibility.
-  }
-
-  try {
-    const adminApiTokenService = strapi.admin?.services?.['api-token-admin']
-    if (adminApiTokenService?.authenticateAdminToken) {
-      const result = await adminApiTokenService.authenticateAdminToken(token)
-      if (result?.authenticated === true) return true
-    }
-  } catch {
-    // Fall through to the legacy lookup used by older project endpoints.
-  }
-
-  try {
-    const apiTokenSalt = strapi.config.get('admin.apiToken.salt') as string
-    if (!apiTokenSalt) return false
-    if (token === apiTokenSalt) return true
-
-    const hashed = crypto.createHmac('sha512', apiTokenSalt).update(token).digest('hex')
-    const apiToken = await strapi.db.query('admin::api-token').findOne({
-      where: { accessKey: hashed },
-    })
-
-    if (!apiToken) return false
-    if (apiToken.expiresAt && new Date(apiToken.expiresAt) < new Date()) return false
-
-    return true
-  } catch {
-    return false
-  }
+function internalServerError(ctx: any, strapi: any, err: unknown) {
+  const msg = err instanceof Error ? err.message : String(err)
+  strapi.log.error(`[Blog SaveFromN8n] Unexpected error: ${msg}`)
+  return reject(ctx, 500, 'Internal server error')
 }
 
 function getPayload(ctx: any): Record<string, any> {
@@ -98,6 +37,12 @@ function cleanBlogData(input: Record<string, any>) {
   return data
 }
 
+function isValidDocumentId(value: unknown): value is string {
+  return typeof value === 'string' && /^[a-zA-Z0-9_-]+$/.test(value) && value.length <= 128
+}
+
+const BLOG_ACTIONS = ['api::blog.blog.create', 'api::blog.blog.update']
+
 export default factories.createCoreController('api::blog.blog', ({ strapi }) => ({
   async saveFromN8n(ctx: any) {
     const authHeader = ctx.request.header.authorization
@@ -105,7 +50,7 @@ export default factories.createCoreController('api::blog.blog', ({ strapi }) => 
       return reject(ctx, 401, 'Missing or invalid credentials')
     }
 
-    const valid = await verifyToken(authHeader.split(' ')[1], strapi)
+    const valid = await verifyToken(authHeader.split(' ')[1], strapi, BLOG_ACTIONS)
     if (!valid) {
       return reject(ctx, 401, 'Missing or invalid credentials')
     }
@@ -113,7 +58,8 @@ export default factories.createCoreController('api::blog.blog', ({ strapi }) => 
     try {
       const payload = getPayload(ctx)
       const data = cleanBlogData(payload)
-      const documentId = payload.documentId || payload._existingDocumentId
+      const rawDocumentId = payload.documentId || payload._existingDocumentId
+      const documentId = isValidDocumentId(rawDocumentId) ? rawDocumentId : undefined
 
       if (!data.title) return ctx.badRequest('Blog title is required')
 
@@ -131,9 +77,7 @@ export default factories.createCoreController('api::blog.blog', ({ strapi }) => 
       ctx.status = documentId ? 200 : 201
       ctx.body = { data: blog }
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : String(err)
-      strapi.log.error(`[Blog SaveFromN8n] Unexpected error: ${msg}`)
-      return ctx.badRequest(msg)
+      return internalServerError(ctx, strapi, err)
     }
   },
 }))

@@ -1,6 +1,6 @@
 # B2B CMS Agent 工作指南
 
-> 适用目录: `D:\www\b2bcms`  
+> 适用目录: `D:\www\b2bos\b2bcms`
 > 更新时间: 2026-06-27  
 > 目的: 帮助后续 AI agent / 开发协作者快速理解这个 Strapi + Astro 多站点 B2B 营销获客系统，并以正确边界修改代码。
 
@@ -8,12 +8,13 @@
 
 这是一个面向 B2B 外贸营销获客的网站群系统。
 
-- 后端: Strapi 5 CE，位于 `D:\www\b2bcms`，负责产品、页面、导航、SEO、FAQ、线索等结构化内容管理。
-- 前端: Astro 5 monorepo，位于 `D:\www\b2b_frontend`，用一套共享代码构建多个独立静态网站。
+- 后端: Strapi 5 CE，位于 `D:\www\b2bos\b2bcms`，负责产品、页面、导航、SEO、FAQ、线索等结构化内容管理。
+- 前端: Astro 5 monorepo，位于 `D:\www\b2bos\b2b_frontend`，用一套共享代码构建多个独立静态网站。
 - 后端部署: Railway，生产域名 `https://ppm.productsb2b.com`。
 - 前端部署: Vercel，每个 `apps/<site>` 是一个独立 Vercel 项目。
 - 图片存储: Cloudflare R2，前端通过 CDN URL 直接渲染。
-- 代码管理: Strapi 仓库和 Astro 仓库是两个 Git 仓库；`b2b_frontend/` 已从 Strapi 仓库 `.gitignore` 排除。
+- 工作流运维: n8n 工作流仓库位于 `D:\www\b2bos\n8n`，负责产品采集、图片处理、Strapi 写入、失败告警和定时运维。
+- 代码管理: Strapi、Astro、n8n 是三个独立 Git 仓库；`b2b_frontend/` 已从 Strapi 仓库 `.gitignore` 排除。
 
 核心原则:
 
@@ -44,7 +45,7 @@
 Strapi 根目录:
 
 ```text
-D:\www\b2bcms
+D:\www\b2bos\b2bcms
 ├── config/                 # Strapi server/admin/database/api/middleware/plugins 配置
 ├── src/
 │   ├── bootstrap.ts        # 启动时同步 Public 权限、Admin 视图配置、状态迁移
@@ -60,7 +61,7 @@ D:\www\b2bcms
 Astro monorepo:
 
 ```text
-b2b_frontend/
+D:\www\b2bos\b2b_frontend
 ├── packages/
 │   ├── cms/                # @cms/client: Strapi API client、types、queries、site resolver、link index
 │   ├── ui/                 # @ui/components: layout、pages、sections、ui、SEO、schema、media
@@ -71,11 +72,20 @@ b2b_frontend/
 └── pnpm-workspace.yaml
 ```
 
+n8n 工作流仓库:
+
+```text
+D:\www\b2bos\n8n
+```
+
+用于维护与 Strapi 配合的自动化工作流，包括产品采集、图片下载/转换、`create-with-images` 写入、失败告警、定时检查等。工作流导出、凭据说明和调试记录应留在 n8n 仓库内，不并入 Strapi 仓库。
+
 重要边界:
 
-- 修改 Strapi 代码时在 `D:\www\b2bcms` 下运行 `npm`。
-- 修改 Astro 代码时在 `D:\www\b2b_frontend` 下运行 `pnpm`。
-- 两个目录各有自己的 Git 状态，提交前必须分别检查。
+- 修改 Strapi 代码时在 `D:\www\b2bos\b2bcms` 下运行 `npm`。
+- 修改 Astro 代码时在 `D:\www\b2bos\b2b_frontend` 下运行 `pnpm`。
+- 修改 n8n 工作流时在 `D:\www\b2bos\n8n` 下工作，并先检查该仓库状态。
+- 三个目录各有自己的 Git 状态，提交前必须分别检查。
 - 不要把 `.env`、`CLAUDE.md` 中的密钥、管理员密码、R2 Secret、数据库密码写入新文档或提交信息。
 
 ## 4. 常用命令
@@ -83,7 +93,7 @@ b2b_frontend/
 Strapi:
 
 ```powershell
-cd D:\www\b2bcms
+cd D:\www\b2bos\b2bcms
 npm run develop      # 本地开发，默认 http://localhost:1339/admin
 npm run build        # Strapi build
 npm run start        # 生产模式；prestart 会执行 ensure-sequences.js
@@ -94,12 +104,12 @@ npm run migrate-tags
 Astro:
 
 ```powershell
-cd D:\www\b2b_frontend
+cd D:\www\b2bos\b2b_frontend
 pnpm dev
 pnpm build
 pnpm lint
 
-cd D:\www\b2b_frontend\apps\proneofishing
+cd D:\www\b2bos\b2b_frontend\apps\proneofishing
 pnpm dev             # 单站点本地开发
 ```
 
@@ -326,14 +336,14 @@ SEO / 性能规则:
 Strapi 变更:
 
 ```powershell
-cd D:\www\b2bcms
+cd D:\www\b2bos\b2bcms
 npm run build
 ```
 
 Astro 变更:
 
 ```powershell
-cd D:\www\b2b_frontend
+cd D:\www\b2bos\b2b_frontend
 pnpm build
 ```
 

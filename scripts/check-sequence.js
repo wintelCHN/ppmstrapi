@@ -1,34 +1,31 @@
-const { Pool } = require('pg');
+const { Pool } = require('pg')
+const { loadEnvFile, requireEnv, getDatabaseUrl } = require('./lib/env')
 
-// Local
-async function checkLocal() {
-  const p = new Pool({
-    host: '127.0.0.1', port: 5432, database: 'b2bcms',
-    user: 'strapi_user', password: 'strapi_pass',
-  });
+loadEnvFile()
+
+async function main() {
+  const connectionString = getDatabaseUrl()
+  const pool = connectionString
+    ? new Pool({ connectionString })
+    : new Pool({
+        host: requireEnv('DATABASE_HOST'),
+        port: parseInt(requireEnv('DATABASE_PORT'), 10),
+        database: requireEnv('DATABASE_NAME'),
+        user: requireEnv('DATABASE_USERNAME'),
+        password: requireEnv('DATABASE_PASSWORD'),
+      })
+
   try {
-    const r = await p.query('SELECT last_value FROM product_sku_seq');
-    console.log('LOCAL: sequence EXISTS, last_value =', r.rows[0].last_value);
-  } catch (e) {
-    console.log('LOCAL: sequence NOT found:', e.message);
+    const res = await pool.query(
+      "SELECT EXISTS (SELECT 1 FROM pg_class WHERE relname = 'product_sku_seq' AND relkind = 'S') AS exists",
+    )
+    console.log('product_sku_seq exists:', res.rows[0].exists)
+  } catch (err) {
+    console.error('ERROR:', err.message)
+    process.exit(1)
+  } finally {
+    await pool.end()
   }
-  await p.end();
 }
 
-// Railway
-async function checkRailway() {
-  const p = new Pool({ connectionString: process.env.DATABASE_URL });
-  try {
-    const r = await p.query('SELECT last_value FROM product_sku_seq');
-    console.log('RAILWAY: sequence EXISTS, last_value =', r.rows[0].last_value);
-  } catch (e) {
-    console.log('RAILWAY: sequence NOT found:', e.message);
-  }
-  await p.end();
-}
-
-(async () => {
-  await checkLocal();
-  console.log('---');
-  await checkRailway();
-})();
+main()

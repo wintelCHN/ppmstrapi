@@ -30,8 +30,8 @@ Use this local pattern:
 
 Reference files:
 
-- [src/api/product/routes/product.ts](D:/www/b2bcms/src/api/product/routes/product.ts)
-- [src/api/product/controllers/product.ts](D:/www/b2bcms/src/api/product/controllers/product.ts)
+- [src/api/product/routes/product.ts](D:/www/b2bos/b2bcms/src/api/product/routes/product.ts)
+- [src/api/product/controllers/product.ts](D:/www/b2bos/b2bcms/src/api/product/controllers/product.ts)
 
 Important:
 
@@ -58,8 +58,8 @@ Product lifecycle currently handles:
 
 Reference files:
 
-- [src/api/product/content-types/product/lifecycles.ts](D:/www/b2bcms/src/api/product/content-types/product/lifecycles.ts)
-- [src/api/shared/webhook.ts](D:/www/b2bcms/src/api/shared/webhook.ts)
+- [src/api/product/content-types/product/lifecycles.ts](D:/www/b2bos/b2bcms/src/api/product/content-types/product/lifecycles.ts)
+- [src/api/shared/webhook.ts](D:/www/b2bos/b2bcms/src/api/shared/webhook.ts)
 
 ## Product and n8n Rules
 
@@ -84,8 +84,8 @@ Important Product integration rules:
 
 Reference files:
 
-- [src/api/product/controllers/product.ts](D:/www/b2bcms/src/api/product/controllers/product.ts)
-- [src/api/product/services/product.ts](D:/www/b2bcms/src/api/product/services/product.ts)
+- [src/api/product/controllers/product.ts](D:/www/b2bos/b2bcms/src/api/product/controllers/product.ts)
+- [src/api/product/services/product.ts](D:/www/b2bos/b2bcms/src/api/product/services/product.ts)
 
 ## Lead Center Rules
 
@@ -102,9 +102,9 @@ Current behavior:
 
 Reference files:
 
-- [src/api/lead/routes/lead.ts](D:/www/b2bcms/src/api/lead/routes/lead.ts)
-- [src/api/lead/controllers/lead.ts](D:/www/b2bcms/src/api/lead/controllers/lead.ts)
-- [src/api/lead/services/lead.ts](D:/www/b2bcms/src/api/lead/services/lead.ts)
+- [src/api/lead/routes/lead.ts](D:/www/b2bos/b2bcms/src/api/lead/routes/lead.ts)
+- [src/api/lead/controllers/lead.ts](D:/www/b2bos/b2bcms/src/api/lead/controllers/lead.ts)
+- [src/api/lead/services/lead.ts](D:/www/b2bos/b2bcms/src/api/lead/services/lead.ts)
 
 ## R2 and Upload Rules
 
@@ -120,9 +120,9 @@ Key points:
 
 Reference files:
 
-- [config/plugins.ts](D:/www/b2bcms/config/plugins.ts)
-- [config/middlewares.ts](D:/www/b2bcms/config/middlewares.ts)
-- [scripts/migrate-to-r2.js](D:/www/b2bcms/scripts/migrate-to-r2.js)
+- [config/plugins.ts](D:/www/b2bos/b2bcms/config/plugins.ts)
+- [config/middlewares.ts](D:/www/b2bos/b2bcms/config/middlewares.ts)
+- [scripts/migrate-to-r2.js](D:/www/b2bos/b2bcms/scripts/migrate-to-r2.js)
 
 ## Railway and Runtime Notes
 
@@ -133,14 +133,14 @@ Reference files:
 
 Reference files:
 
-- [scripts/ensure-sequences.js](D:/www/b2bcms/scripts/ensure-sequences.js)
-- [scripts/check-sequence.js](D:/www/b2bcms/scripts/check-sequence.js)
+- [scripts/ensure-sequences.js](D:/www/b2bos/b2bcms/scripts/ensure-sequences.js)
+- [scripts/check-sequence.js](D:/www/b2bos/b2bcms/scripts/check-sequence.js)
 
 ## Admin UI Rules
 
 - Put admin UI changes under `src/admin/`.
 - Prefer scoped DOM or extension-based customization over editing `node_modules`.
-- Product media preview customizations currently live in [src/admin/app.tsx](D:/www/b2bcms/src/admin/app.tsx).
+- Product media preview customizations currently live in [src/admin/app.tsx](D:/www/b2bos/b2bcms/src/admin/app.tsx).
 
 ## Validation Checklist
 

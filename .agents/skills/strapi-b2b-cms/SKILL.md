@@ -1,6 +1,6 @@
 ---
 name: strapi-b2b-cms
-description: Strapi 5 project skill for this B2B CMS workspace. Use when working on the backend at D:\www\b2bcms, especially for content-type schema changes, lifecycles, custom controllers/routes, Strapi Admin customizations, Product or Lead flows, Cloudflare R2 upload behavior, Railway deployment constraints, n8n ingestion endpoints, or when checking Strapi 5 project-specific pitfalls and validation steps.
+description: Strapi 5 project skill for this B2B CMS workspace. Use when working on the backend at D:\www\b2bos\b2bcms, especially for content-type schema changes, lifecycles, custom controllers/routes, Strapi Admin customizations, Product or Lead flows, Cloudflare R2 upload behavior, Railway deployment constraints, n8n ingestion endpoints, or when checking Strapi 5 project-specific pitfalls and validation steps.
 ---
 
 # Strapi B2B CMS
@@ -9,13 +9,13 @@ This skill captures the project-specific rules for the Strapi backend in this wo
 
 ## Quick Start
 
-1. Confirm the task stays inside `D:\www\b2bcms` and not `b2b_frontend/`.
+1. Confirm the task stays inside `D:\www\b2bos\b2bcms` and not `b2b_frontend/` or `n8n/`.
 2. Read `git status --short` before editing and work around unrelated dirty files.
 3. Read only the relevant reference file for the task:
-   - Read [references/project-map.md](D:/www/b2bcms/.agents/skills/strapi-b2b-cms/references/project-map.md) for repository boundaries, doc priority, content model map, and frontend coupling.
-   - Read [references/strapi-rules.md](D:/www/b2bcms/.agents/skills/strapi-b2b-cms/references/strapi-rules.md) for lifecycle, controller, route, R2, Railway, webhook, Lead, Product, and validation rules.
+   - Read [references/project-map.md](D:/www/b2bos/b2bcms/.agents/skills/strapi-b2b-cms/references/project-map.md) for repository boundaries, doc priority, content model map, and frontend coupling.
+   - Read [references/strapi-rules.md](D:/www/b2bos/b2bcms/.agents/skills/strapi-b2b-cms/references/strapi-rules.md) for lifecycle, controller, route, R2, Railway, webhook, Lead, Product, and validation rules.
 4. Inspect the exact schema/controller/service/lifecycle/admin files before changing behavior.
-5. Validate Strapi changes with `npm run build` from `D:\www\b2bcms`.
+5. Validate Strapi changes with `npm run build` from `D:\www\b2bos\b2bcms`.
 
 ## Default Workflow
 
@@ -34,7 +34,7 @@ This skill captures the project-specific rules for the Strapi backend in this wo
 
 ### Media, upload, or R2 work
 
-- Check both [config/plugins.ts](D:/www/b2bcms/config/plugins.ts) and [config/middlewares.ts](D:/www/b2bcms/config/middlewares.ts).
+- Check both [config/plugins.ts](D:/www/b2bos/b2bcms/config/plugins.ts) and [config/middlewares.ts](D:/www/b2bos/b2bcms/config/middlewares.ts).
 - Remember that Cloudflare R2 uses the AWS S3 provider path in this project.
 - Check CSP and size-limit behavior when admin previews or uploads fail.
 
@@ -50,7 +50,7 @@ This skill captures the project-specific rules for the Strapi backend in this wo
 - Assume Strapi 5 flattened API responses and no `populate=deep`.
 - Keep changes scoped. Avoid editing `node_modules` or broad admin overrides when a local `src/admin` customization works.
 - Never copy secrets from `CLAUDE.md`, `.env`, or local config into skill files, docs, or commits.
-- Treat `b2b_frontend/` as a separate Git repo and separate runtime.
+- Treat `b2b_frontend/` and `D:\www\b2bos\n8n` as separate Git repos and separate runtime contexts.
 
 ## Task Routing
 
@@ -69,4 +69,4 @@ This skill captures the project-specific rules for the Strapi backend in this wo
 
 - Existing local docs can be stale in parts. When docs conflict, prefer current code plus the higher-priority docs listed in `references/project-map.md`.
 - `CLAUDE.md` is useful for orientation but may contain sensitive values. Read it selectively and never reproduce secrets.
-- Product media previews and other admin UI tweaks belong in [src/admin/app.tsx](D:/www/b2bcms/src/admin/app.tsx), not in `node_modules`.
+- Product media previews and other admin UI tweaks belong in [src/admin/app.tsx](D:/www/b2bos/b2bcms/src/admin/app.tsx), not in `node_modules`.

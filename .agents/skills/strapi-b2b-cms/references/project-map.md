@@ -2,10 +2,11 @@
 
 ## Scope
 
-This skill is for the Strapi backend repo at `D:\www\b2bcms`.
+This skill is for the Strapi backend repo at `D:\www\b2bos\b2bcms`.
 
-- Strapi root: `D:\www\b2bcms`
-- Astro monorepo: `D:\www\b2b_frontend`
+- Strapi root: `D:\www\b2bos\b2bcms`
+- Astro monorepo: `D:\www\b2bos\b2b_frontend`
+- n8n workflows: `D:\www\b2bos\n8n`
 - These are separate Git repos and separate runtime contexts.
 
 ## Document Priority
@@ -85,9 +86,19 @@ Minimum Astro touchpoints for Dynamic Zone work:
 - `b2b_frontend/packages/ui/src/components/sections/*`
 - `b2b_frontend/packages/ui/src/components/ui/DynamicZone.astro`
 
+## Workflow Coupling
+
+Strapi ingestion and alerting changes may require n8n workflow updates in `D:\www\b2bos\n8n`, especially for:
+
+- Product collection and `/api/products/create-with-images`
+- Image download, base64 conversion, and upload error handling
+- `/api/alert/failure` payloads and notification behavior
+- `N8N_API_TOKEN` usage and environment variable names
+
 ## Working Boundaries
 
-- Run Strapi commands with `npm` from `D:\www\b2bcms`.
-- Run Astro commands with `pnpm` from `D:\www\b2b_frontend`.
+- Run Strapi commands with `npm` from `D:\www\b2bos\b2bcms`.
+- Run Astro commands with `pnpm` from `D:\www\b2bos\b2b_frontend`.
+- Work on n8n workflows from `D:\www\b2bos\n8n`.
 - Do not leak `.env`, `CLAUDE.md`, or cloud/database/admin secrets into docs or generated files.
 - Expect dirty files in the repo and avoid reverting unrelated changes.

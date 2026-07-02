@@ -1,0 +1,8 @@
+[mcp_servers.github]
+url = "https://api.githubcopilot.com/mcp/"
+
+[mcp_servers.n8n-mcp]
+url = "https://primary-production-835fa.up.railway.app/mcp-server/http"
+
+[mcp_servers.n8n-mcp.http_headers]
+Authorization = "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIwMWU3MzdjNC00ZDk1LTQ5NjQtYTUwYy0wMWRkMjQyYjMxMjkiLCJpc3MiOiJuOG4iLCJhdWQiOiJtY3Atc2VydmVyLWFwaSIsImp0aSI6Ijg3YTFiMDRlLTQyNTUtNDgyMS05OTk4LTJhNWFjOGIxNjRlNiIsImlhdCI6MTc4MjM3NDYzNH0.0gqUpJrY6I2uN-cnUBBecUhMq38x2QBjmEW9WSDCkVs"
